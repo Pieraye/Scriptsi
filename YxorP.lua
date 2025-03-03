@@ -1,5 +1,5 @@
 RemoveHooks()
-tabel_uid = {"327723, 632874"}
+tabel_uid = {"327723", 632874"}
 
 update_info = "`2Updated `won [ 3 March 2025 ]"
 local wl = 242
