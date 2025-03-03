@@ -1,5 +1,5 @@
 RemoveHooks()
-tabel_uid = {"327723"}
+tabel_uid = {"327723, 632874"}
 
 update_info = "`2Updated `won [ 3 March 2025 ]"
 local wl = 242
@@ -30,6 +30,8 @@ local CONFIG = {
   AUTO_PULL = false,
   AUTO_KICK = false,
   AUTO_BAN = false,
+  FAST_TRADE = false,
+  VIEW_INV = false,
   RANDOM_CHAT = false
 }
 local options = {
@@ -103,6 +105,8 @@ local color_chat = {
 local options = {
   check_antibounce = false,
   check_modfly = false,
+  check_antiwater = false,
+  check_antiportal = false,
   check_speed = false,
   check_gravity = false,
   check_aimbot = false,
@@ -286,6 +290,476 @@ local function getCurrentTime()
   return currentTime, currentTimeInSeconds
 end
 
+-- BTK Part Function --
+data = {}
+datalock = {}
+local pull = false
+local kick = false
+local ban = false
+local cbgl = true
+local putchand = true
+local taxset = 0
+local Growid = GetLocal().name
+local time_now = os.date("`1%H:%M`0, `1%d-%m-%Y")
+
+function cty(id,id2,amount)
+for _, inv in pairs(GetInventory()) do
+if inv.id == id then
+if inv.amount < amount then
+SendPacketRaw(false, { type = 10, value = id2})
+end end end end
+
+function removeColorAndSymbols(str)
+    cleanedStr = string.gsub(str, "`(%S)", '')
+    cleanedStr = string.gsub(cleanedStr, "Dr%.%s*", '')
+    cleanedStr = string.gsub(cleanedStr, "%s*%[BOOST%]", '')
+    cleanedStr = string.gsub(cleanedStr, "%(%d+%)", '')
+    cleanedStr = string.gsub(cleanedStr, "`{2}|(~{2})", '')
+    return cleanedStr
+end
+
+function wear(id)
+SendPacketRaw(false, { type = 10, value = id})
+end
+
+function Waklogs(text)
+LogToConsole("`w[`b@.wkka`w] `0"..text)
+end
+
+function say(txt)
+SendPacket(2,"action|input\ntext|"..txt)
+end
+
+function btk()
+function take()
+tiles = {
+{xt1,yt1},
+{xt2,yt2},
+{xt3,yt3},
+{xt4,yt4}
+}
+objects = GetObjectList()
+    for _, obj in pairs(objects) do
+        for _, tiles in pairs(tiles) do
+            if (obj.pos.x)//32 == tiles[1] and (obj.pos.y)//32 == tiles[2] then
+SendPacketRaw(false, {type=11,value=obj.oid,x=obj.pos.x,y=obj.pos.y})
+table.insert(data, {id=obj.id, count=obj.amount})
+            end
+        end
+    end
+Data()
+data = {}
+end
+
+function Data()
+Amount = 0
+for _, list in pairs(data) do
+Name = ""
+if list.id == 11550 then
+Name = "`bBlack Gem Lock"
+Amount = Amount + list.count * 1000000
+elseif list.id == 7188 then
+Name = "`cBlue Gem Lock"
+Amount = Amount + list.count * 10000
+elseif list.id == 1796 then
+Name = "`1Diamond Lock"
+Amount = Amount + list.count * 100
+elseif list.id == 242 then
+Name = "`9World Lock"
+Amount = Amount + list.count
+end end
+data = {}
+end
+
+function drop(id,amount)
+SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|"..id.."|\nitem_count|"..amount.."\n\n")
+end
+
+function inv(id)
+for _, item in pairs(GetInventory()) do
+if (item.id == id) then
+return item.amount
+end end
+return 0
+end
+
+function tax(percent,maxvalue)
+if tonumber(percent) and tonumber(maxvalue) then
+return (maxvalue*percent)/100
+end end
+
+function eattax(x, y)
+if math.abs(GetLocal().pos.x // 32 - x) > 8 or math.abs(GetLocal().pos.y // 32 - y) > 8 then
+return nil end
+if GetTiles(x, y).collidable then
+return nil end
+local Z = 0
+if not GetTiles(x + 1, y).collidable then
+Z = 1
+elseif not GetTiles(x - 1, y).collidable then
+Z = -1
+else
+return nil end
+SendPacketRaw(false, { type = 0, x = (x + Z) * 32, y = y * 32, state = (Z == 1 and 48 or 32) })
+end
+
+function takegems()
+Count = 0
+data = {}
+objects = GetObjectList()
+for _, obj in pairs(objects) do
+for _, tiles in pairs(tile.pos1) do
+if obj.id == 112 and (obj.pos.x)//32 == tiles.x and (obj.pos.y)//32 == tiles.y then
+Count = Count + obj.amount
+SendPacketRaw(false, {type=11,value=obj.oid,x=obj.pos.x,y=obj.pos.y})
+end
+end
+end
+table.insert(data, Count)
+Count = 0
+for _, obj in pairs(objects) do
+for _, tiles in pairs(tile.pos2) do
+if obj.id == 112 and (obj.pos.x)//32 == tiles.x and (obj.pos.y)//32 == tiles.y then
+SendPacketRaw(false, {type=11,value=obj.oid,x=obj.pos.x,y=obj.pos.y})
+Count = Count + obj.amount
+end
+end
+end
+table.insert(data, Count)
+Count = 0
+if data[1] > data[2] then
+SendPacket(2, "action|input\n|text|`w[Player 1 `2Win`w] (gems) `2" .. data[1] .. " `b/ `4" .. data[2] .. " `w(gems) [Player 2 `4Lose`w]")
+elseif data[1] == data[2] then
+SendPacket(2, "action|input\n|text|`0[TIE] (gems) `0".. data[1] .." `b/ `0".. data[2] .." `0(gems) [TIE]")
+else
+SendPacket(2, "action|input\n|text|`w[Player 1 `4Lose`w] (gems) `4" .. data[1] .. " `b/ `2" .. data[2].. " `w(gems) [Player 2 `2Win`w]")
+end
+data = {}
+end
+
+AddHook("onsendpacket", "setering", function(type,str)
+if str:find("action|wrench\n|netid|(%d+)") then 
+id = str:match("action|wrench\n|netid|(%d+)")
+if pull == true then
+netid0 = tonumber(id)
+for _, plr in pairs(GetPlayerList()) do
+if plr.netid == netid0 then
+SendPacket(2,"action|dialog_return\ndialog_name|popup\nnetID|"..id.."|\nbuttonClicked|pull")
+SendPacket(2, "action|input\n|text|`b(cool) Gas Sir? `w[`0"..plr.name.."`w]")
+return true
+elseif kick == true then
+SendPacket(2,"action|dialog_return\ndialog_name|popup\nnetID|"..id.."|\nbuttonClicked|kick")
+return true
+elseif ban == true then
+SendPacket(2,"action|dialog_return\ndialog_name|popup\nnetID|"..id.."|\nbuttonClicked|world_ban")
+return true end end end end
+if str:find("/down") then
+xhost = GetLocal().pos.x//32
+yhost = GetLocal().pos.y//32
+xt1 = xhost - 3
+yt1 = yhost - 2
+xt2 = xhost + 3
+yt2 = yhost - 2
+xt3 = xt1 - 1
+yt3 = yt1
+xt4 = xt2 + 1
+yt4 = yt1
+x1 = xhost - 4
+y1 = yhost - 2
+x2 = xhost + 4
+y2 = yhost - 2
+xgem1 = xhost - 3
+ygem1 = yhost
+xgem2 = xgem1 - 1
+xgem3 = xgem1 - 2
+tile = {
+pos1 = { 
+{x = xgem1, y = ygem1}, {x = xgem2, y = ygem1}, {x = xgem3, y = ygem1}
+},
+pos2 = {
+{x = xgemm1, y = ygemm1}, {x = xgemm2, y = ygemm1}, {x = xgemm3, y = ygemm1}
+}
+}
+xgemm1 = xhost + 3
+ygemm1 = yhost
+xgemm2 = xgemm1 + 1
+xgemm3 = xgemm1 + 2
+tile = {
+pos1 = { 
+{x = xgem1, y = ygem1}, {x = xgem2, y = ygem1}, {x = xgem3, y = ygem1}
+},
+pos2 = {
+{x = xgemm1, y = ygemm1}, {x = xgemm2, y = ygemm1}, {x = xgemm3, y = ygemm1}
+}
+}
+Waklogs("`aBTK Mode `9Chandelier `won `1Down")
+SendPacket(2, "action|input\n|text|(clap) Ready to Play")
+return true
+end
+if str:find("/top") then
+xhost = GetLocal().pos.x//32
+yhost = GetLocal().pos.y//32
+xt1 = xhost - 3
+yt1 = yhost
+xt2 = xhost + 3
+yt2 = yhost 
+xt3 = xt1 - 1
+yt3 = yt1
+xt4 = xt2 + 1
+yt4 = yt1
+x1 = xhost - 4
+y1 = yhost
+x2 = xhost + 4
+y2 = yhost 
+xgem1 = xhost - 3
+ygem1 = yhost - 2
+xgem2 = xgem1 - 1
+xgem3 = xgem1 - 2
+tile = {
+pos1 = { 
+{x = xgem1, y = ygem1}, {x = xgem2, y = ygem1}, {x = xgem3, y = ygem1}
+},
+pos2 = {
+{x = xgemm1, y = ygemm1}, {x = xgemm2, y = ygemm1}, {x = xgemm3, y = ygemm1}
+}
+}
+xgemm1 = xhost + 3
+ygemm1 = yhost - 2
+xgemm2 = xgemm1 + 1
+xgemm3 = xgemm1 + 2
+tile = {
+pos1 = { 
+{x = xgem1, y = ygem1}, {x = xgem2, y = ygem1}, {x = xgem3, y = ygem1}
+},
+pos2 = {
+{x = xgemm1, y = ygemm1}, {x = xgemm2, y = ygemm1}, {x = xgemm3, y = ygemm1}
+}
+}
+Waklogs("`aBTK Mode `9Chandelier `won `3Top")
+SendPacket(2, "action|input\n|text|(clap) Ready to Play")
+return true
+end
+if str:find("/tax (%d+)") then
+newtax = str:match("/tax (%d+)")
+taxset = newtax
+Waklogs("`4Tax `wSet to `2".. taxset.."%")
+return true
+end
+if str:find("/tb") then
+take()
+tax = math.floor(Amount * taxset / 100)
+jatuh = Amount - tax
+all_bet = Amount
+betdl = math.floor( jatuh / 100 )
+bet = math.floor(Amount / 2)
+SendVariantList({[0] = "OnTextOverlay" , [1] = "`w[`0P1: `2"..bet.."`w]`bVS`w[`0P2 :`2"..bet.."`w]\n`w[`0Tax: `2"..taxset.." %`w]\n`w[`0Drop to Win: `2"..jatuh.." `9WLS`w]\n`w[`0Total Drop: `2"..all_bet.." `1DLS`w]"})
+Waklogs("`w[`0P1: `2"..bet.."`w]`bVS`w[`0P2 :`2"..bet.."`w] `w[`0Tax: `2"..taxset.."%`w] `w[`0Drop to Win: `2"..jatuh.." `9WLS`w]")
+return true
+end
+if str:find("/tg") then
+takegems()
+return true
+end
+if str:find("/1")then
+ireng = math.floor(jatuh/1000000)
+bgl = math.floor(jatuh/10000)
+jatuh = jatuh - bgl*10000 
+dl = math.floor(jatuh/100)
+wl = jatuh % 100
+FindPath(math.floor(xt1),math.floor(yt1))
+DropMode = true
+hasil = (ireng ~= 0 and ireng.."`bBlack Gem Lock`0" or "`0").." "..(bgl ~= 0 and bgl.."`eBlue Gem Lock`0" or "`0").." "..(dl ~= 0 and dl.."`1Diamond Lock`0" or "`0").." "..(wl ~= 0 and wl.."`9World Lock`0" or "`0")
+SendPacket(2, "action|input\n|text|`4Drops `w["..hasil.."`w]")
+return true end
+if str:find("/2") then
+ireng = math.floor(jatuh/1000000)
+bgl = math.floor(jatuh/10000)
+jatuh = jatuh - bgl*10000 
+dl = math.floor(jatuh/100)
+wl = jatuh % 100
+FindPath(math.floor(xt2) + 2,math.floor(yt2))
+DropMode = true
+hasil = (ireng ~= 0 and ireng.."`bBlack Gem Lock`0" or "`0").." "..(bgl ~= 0 and bgl.."`eBlue Gem Lock`0" or "`0").." "..(dl ~= 0 and dl.."`1Diamond Lock`0" or "`0").." "..(wl ~= 0 and wl.."`9World Lock`0" or "`0")
+SendPacket(2, "action|input\n|text|`4Drops `w["..hasil.."`w]")
+return true end
+if str:find("/ar (%d+)") then
+count = str:match("/ar (%d+)")
+SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|4604|\nitem_count|"..count)
+return true end
+if str:find("/clov (%d+)") then
+count = str:match("/clov (%d+)")
+SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|528|\nitem_count|"..count)
+return true end
+if str:find("/lolerfp") then
+BTKMENU()
+return true
+end
+return false end)
+function bersih(str)
+local cleanedStr = string.gsub(str, "`(%S)", '')
+cleanedStr = string.gsub(cleanedStr, "`{2}|(~{2})", '')
+return cleanedStr
+end
+
+function theIDs(id) 
+	for _, inv in pairs(GetInventory()) do 
+		if inv.id == id then 
+			return inv.amount 
+		end
+	end 
+	return 0 
+end 
+AddHook("onvariant", "join_world", function(var)
+  if var[0]:find("OnRequestWorldSelectMenu") then 
+    datalock = {} 
+    wl_balance = theIDs(242) 
+    dl_balance = theIDs(1796) * 100 
+    bgl_balance = theIDs(7188) * 10000 
+    black_balance = theIDs(11550) * 1000000 
+    total_balance = wl_balance + dl_balance + bgl_balance + black_balance 
+    Waklogs("Owned `w" ..black_balance.. " `bBLACK `w" ..bgl_balance.. " `eBGL `w" ..dl_balance.. " `cDL `wAnd " ..wl_balance.. " `9WL")
+    Waklogs("Your `8Ba`9la`6n`4ce:`2 "..total_balance.." `9World Lock")
+  end
+  if var[0]:find("OnConsoleMessage") and var[1]:find("Welcome back,") then
+    datalock = {} 
+    wl_balance = theIDs(242) 
+    dl_balance = theIDs(1796) * 100 
+    bgl_balance = theIDs(7188) * 10000 
+    black_balance = theIDs(11550) * 1000000 
+    total_balance = wl_balance + dl_balance + bgl_balance + black_balance 
+    Waklogs("Owned `w" ..black_balance.. " `bBLACK `w" ..bgl_balance.. " `eBGL `w" ..dl_balance.. " `cDL `wAnd " ..wl_balance.. " `9WL")
+    Waklogs("Your `8Ba`9la`6n`4ce:`2 "..total_balance.." `9World Lock")
+  end
+end)
+
+AddHook("onvariant", "variabel", function(var)
+    if var[0]:find("OnDialogRequest") and var[1]:find("add_player_info") then
+        return true
+    end
+
+    if var[0]:find("OnConsoleMessage") and var[1]:find("Spam detected!") then
+        return true
+    end
+
+    if var[0]:find("OnConsoleMessage") and var[1]:find("Unknown command.") then
+        Waklogs("`b[`4unrecognized Commands`b] `cType /menu or use the social portal to view the list of available commands.")
+        return true
+    end
+
+    return false
+end)
+
+while true do
+if dawlock then
+if ireng then
+drop(11550,ireng)
+Sleep(500)
+end
+if bgl then
+drop(7188,bgl)
+Sleep(500)
+end
+if dl then
+drop(1796,dl)
+Sleep(500)
+end
+if wl then
+drop(242,wl)
+Sleep(500)
+end
+dawlock = false
+end
+Sleep(3000)
+if DropMode then
+if bgl then
+SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|7188|\nitem_count|"..bgl)
+Sleep(500)
+end
+if dl then
+SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|1796|\nitem_count|"..dl)
+Sleep(500)
+end
+if wl then
+SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|242|\nitem_count|"..wl)
+Sleep(500)
+end
+jatuh = nil
+DropMode = false
+if putchand then
+FindPath(xgem1,ygem1)
+Sleep(300)
+SendPacketRaw(false, {
+type = 3,
+value = 5640,
+x = GetLocal().pos.x,
+y = GetLocal().pos.y,
+px = xgem1,
+py = ygem1,
+state = 16
+})
+FindPath(xgem2,ygem1)
+Sleep(200)
+SendPacketRaw(false, {
+type = 3,
+value = 5640,
+x = GetLocal().pos.x,
+y = GetLocal().pos.y,
+px = xgem1-1,
+py = ygem1,
+state = 16
+})
+FindPath(xgem3,ygem1)
+Sleep(200)
+SendPacketRaw(false, {
+type = 3,
+value = 5640,
+x = GetLocal().pos.x,
+y = GetLocal().pos.y,
+px = xgem1-2,
+py = ygem1,
+state = 16
+})
+Sleep(200)
+FindPath(xgemm1,ygemm1)
+Sleep(300)
+SendPacketRaw(false, {
+type = 3,
+value = 5640,
+x = GetLocal().pos.x,
+y = GetLocal().pos.y,
+px = xgemm1,
+py = ygemm1,
+state = 16
+})
+FindPath(xgemm2,ygemm1)
+Sleep(200)
+SendPacketRaw(false, {
+type = 3,
+value = 5640,
+x = GetLocal().pos.x,
+y = GetLocal().pos.y,
+px = xgemm1+1,
+py = ygemm1,
+state = 16
+})
+FindPath(xgemm3,ygemm1)
+Sleep(200)
+SendPacketRaw(false, {
+type = 3,
+value = 5640,
+x = GetLocal().pos.x,
+y = GetLocal().pos.y,
+px = xgemm1+2,
+py = ygemm1,
+state = 16
+})
+FindPath(xhost, yhost)
+end
+end
+Sleep(2000)
+end
+end
+
 function main()
 local function ShowMainDialog()
   local varlist_command = {}
@@ -313,7 +787,8 @@ add_button_with_icon|command_list|`0Command List|staticBlueFrame|658||
 add_button_with_icon|social_portal|`0Social Portal|staticBlueFrame|1366||
 add_custom_break|
 end_list|
-add_button_with_icon|chatting_menu|`0Chat menu|staticBlueFrame|8282||
+add_button_with_icon|btk_menu|`0BTK Menu|staticBlueFrame|14542||
+add_button_with_icon|chatting_menu|`0Chat Menu|staticBlueFrame|8282||
 add_button_with_icon|skin_menu|`0Skin Menu|staticBlueFrame|15772||
 add_button_with_icon|cctv_menu|`0LOGs|staticBlueFrame|1436||
 add_button_with_icon|command_proxyinfo|`0Credit|staticBlueFrame|15570||
@@ -381,16 +856,19 @@ local function ShowAbilitiesDialog()
   varlist_command[1] = [[
 set_default_color|`o
 text_scaling_string|commandList
-add_label_with_icon|big|`0Abilities Menu````|left|1662|
-add_smalltext|------------------------------------------------------|
-add_textbox|`0Auto : |left|
+add_label_with_icon|big|`7Abilities Menu!````|left|9654|
+add_spacer|small|
+add_textbox|`0Auto Part |left|
 add_checkbox|check_autospam|`0Auto Spam Mode|]] .. CHECKBOX(options.check_autospam) .. [[|
 add_checkbox|check_gems|`0Auto Take Gems Mode|]] .. CHECKBOX(options.check_gems) .. [[|
-add_textbox|`0Abilities : |left|
+add_textbox|`0Abilities Part |left|
 add_checkbox|check_speed|`0Speed Mode|]] .. CHECKBOX(options.check_speed) .. [[|
 add_checkbox|check_gravity|`0Gravity Mode|]] .. CHECKBOX(options.check_gravity) .. [[|
 add_checkbox|check_aimbot|`0Aim Bot Mode|]] .. CHECKBOX(options.check_aimbot) .. [[|
-add_textbox|`0Less Lag Improve Fps : |left|
+add_checkbox|check_modfly|`0Modfly Mode|]] .. CHECKBOX(options.check_modfly) .. [[|
+add_checkbox|check_antiportal|`0Anti Portal Mode|]] .. CHECKBOX(options.check_antiportal) .. [[|
+add_checkbox|check_antiwater|`0Anti Water Mode|]] .. CHECKBOX(options.check_antiwater) .. [[|
+add_textbox|`0Improves FPS Part |left|
 add_checkbox|check_lonely|`0Lonely Mode|]] .. CHECKBOX(options.check_lonely) .. [[|
 add_checkbox|check_ignoreo|`0Ignore Others Drop Mode|]] .. CHECKBOX(options.check_ignoreo) .. [[|
 add_checkbox|check_ignoref|`0Ignore Others Completely Mode|]] .. CHECKBOX(options.check_ignoref) .. [[|
@@ -420,6 +898,34 @@ add_button|command_back|`9Back|noflags|0|0|
   SendVariantList(varlist_command)
 end
 
+local function ShowBtkDialog()
+  local varlist_command = {}
+  varlist_command[0] = "OnDialogRequest"
+  varlist_command[1] = [[
+set_default_color|`o
+add_label_with_icon|big|`aBTK `wHelper|left|14542|
+add_spacer|small|
+text_scaling_string|jakhelperbdjsjn|
+add_smalltext|`aBTK `7Commands|
+add_label_with_icon|small|`1/top `0: [ `9Chandelier `won `1Top `w]|left|340|
+add_label_with_icon|small|`3/down `0: [ `9Chandelier `won `3Down `w]|left|340|
+add_label_with_icon|small|`4/tax `0: [ Set `4Tax `won `2Percentage % `w]|left|9428|
+add_label_with_icon|small|`a/tb `0: [ Take Players `aBet `w]|left|6122|
+add_label_with_icon|small|`#/tg `0: [ Take The `#Gems `w]|left|5774|
+add_label_with_icon|small|`8/1 `0: [ Drop `2Win `wto Player `81 `w]|left|14406|
+add_label_with_icon|small|`9/2 `0: [ Drop `2Win `wto Player `92 `w]|left|14406|
+add_spacer|small|
+add_label_with_icon|big|`wDrops Consumable|left|6922|
+add_spacer|small|
+add_label_with_icon|small|`9/ar `0: [Drops `9Arroz Con Pollo`w]|left|4604|
+add_label_with_icon|small|`2/clov `0: [Drops `2Lucky Clover`w]|left|528|
+add_spacer|small|
+add_quick_exit||
+add_button|command_back|`9Back|noflags|0|0|
+]]
+  SendVariantList(varlist_command)
+end
+
 local function ShowWrenchDialog()
   local varlist_command = {}
   varlist_command[0] = "OnDialogRequest"
@@ -429,13 +935,17 @@ add_label_with_icon|big|`7Wrench Menu!|left|14714|
 add_spacer|small||
 text_scaling_string|jakhelperbdjsjn|
 add_smalltext|`7Shortcut Commands|
-add_label_with_icon|small|`c/pl `0: auto `cpull|left|482|
-add_label_with_icon|small|`4/kc `0: auto `4kick|left|482|
-add_label_with_icon|small|`b/bn `0: auto `bban|left|482|
+add_label_with_icon|small|`c/pl `0: auto `cpull|left|3522|
+add_label_with_icon|small|`4/kc `0: auto `4kick|left|3522|
+add_label_with_icon|small|`b/bn `0: auto `bban|left|3522|
+add_label_with_icon|small|`8/inv `0: to View `8Inventory|left|448|
+add_label_with_icon|small|`2/trd `0: Fast `2Trade|left|32|
+add_label_with_icon|small|`7/woff `0: to `4Disable `wWrench Mode|left|15590|
 add_spacer|small|
 add_button_with_icon|pullmode|`cPull `wMode||274|
 add_button_with_icon|kickmode|`4Kick `wMode||276||
 add_button_with_icon|banmode|`bBan `wMode||278||
+add_button_with_icon|wrenchoff|`7Disable `wWrench||15468||
 add_button_with_icon||END_LIST|noflags|0||
 add_quick_exit||
 add_button|command_back|`9Back|noflags|0|0|
@@ -543,7 +1053,7 @@ add_spacer|small||
 add_label_with_icon|big|`0Change Logs|left|6128|
 add_spacer|small|
 add_smalltext|`0]]..update_info..[[|
-add_url_button|Muffinn|`#Discord Server|noflags|https://discord.com/channels/1235908581522673744/1247890148809506907|Would you like to Join `b@Wakka `#Discord Server`w?|0|0|
+add_url_button|Wakka|`#Discord Server|noflags|https://discord.com/channels/1235908581522673744/1247890148809506907|Would you like to Join `b@Wakka `#Discord Server`w?|0|0|
 add_quick_exit||
 add_button|command_back|`9Back|noflags|0|0|
 ]]
@@ -638,12 +1148,12 @@ local function blinkLoop()
       
       if GetWorld() == nil then
           if not isPaused then
-              waklogs("Blink Mode `4Paused `w(Not in world)")
+              waklogs("`#Ra`2i`3n`4b`5o`9w `wMode `4Paused")
               isPaused = true
           end
       else
           if isPaused then
-              waklogs("Blink Mode `2Resumed")
+              waklogs("`#Ra`2i`3n`4b`5o`9w `wMode `2Resumed")
               isPaused = false
           end
 
@@ -665,19 +1175,19 @@ AddHook("OnSendPacket", "FeatureControl", function(type, str)
   if str:find("EnableSpam|1") and not options.check_autospam then
       options.check_autospam = true
       AutoSpam = true
-      waklogs("Auto Spam `2Enabled")
+      waklogs("`7Auto Spam `2Enabled")
       RunThread(spamLoop)
   elseif str:find("EnableSpam|0") and options.check_autospam then
       options.check_autospam = false
       AutoSpam = false
-      waklogs("Auto Spam `4Disabled")
+      waklogs("`7Auto Spam `4Disabled")
   elseif str:find("buttonClicked|blinkskin") then
       activeBlinkskin = not activeBlinkskin
       if activeBlinkskin then
-        waklogs("Blink Mode `2Enabled")
+        waklogs("`#Ra`2i`3n`4b`5o`9w `wSkin `2Enabled")
           RunThread(blinkLoop)
       else
-        waklogs("Blink Mode `4Disabled")
+        waklogs("`#Ra`2i`3n`4b`5o`9w `wSkin `4Disabled")
       end
       return true
   end
@@ -687,10 +1197,10 @@ end)
 AddHook("OnSendPacket", "SettingSpam", function(type, str)
   if str:find("EnableEmoji|1") and not options.check_emoji then
       options.check_emoji = true
-      waklogs("Emoji `2Enabled")
+      waklogs("`wEmojies `2Enabled")
   elseif str:find("EnableEmoji|0") and options.check_emoji then
       options.check_emoji = false
-      waklogs("Emoji `4Disabled")
+      waklogs("`wEmojies `4Disabled")
   end
 
   local newText = str:match("SetSpamText|(.-)[\n|]")
@@ -959,6 +1469,7 @@ end
   if str:find("others_menu") then ShowOthersDialog() return true end
   if str:find("command_abilities") then ShowAbilitiesDialog() return true end
   if str:find("chatting_menu") then ShowChatsDialog() return true end
+  if str:find("btk_menu") then ShowBtkDialog() return true end
 
   if str:find("social_portal") then
       SendPacket(2,"action|dialog_return\ndialog_name|social\nbuttonClicked|back")
@@ -1032,17 +1543,17 @@ end
 --Skin menu
 if str:find("buttonClicked|redskin") then
   SendPacket(2, "action|setSkin\ncolor|1345519520")
-  say("Red Skin Active")
+  say("`4Red Skin `2Active")
   return true
 end
 if str:find("buttonClicked|blackskin") then
   SendPacket(2, "action|dialog_return\ndialog_name|skinpicker\nred|0\ngreen|0\nblue|0\ntransparency|0")
-  say("Black Skin Active")
+  say("`bBlack Skin `2Active")
   return true
 end
 if str:find("buttonClicked|normalskin") then
   SendPacket(2, "action|dialog_return\ndialog_name|skinpicker\nred|255\ngreen|229\nblue|200\ntransparency|0")
-  say("Changed to Default Skin")
+  say("`wChanged to Default Skin")
   return true
 end
 
@@ -1075,49 +1586,64 @@ if str:find("buttonClicked|active_antibounce") then
   return true
 end
 
---cps cheat menu
+-- CPS Cheat Menu & Bothax Cheat Menu --
 if str:find("check_speed|1") and not options.check_speed 
-then options.check_speed = true overlayText("Speedy Mode `2Enable")
+then options.check_speed = true overlayText("Speedy Mode `2Added")
 elseif str:find("check_speed|0") and options.check_speed then 
 options.check_speed = false overlayText("Speedy Mode `4Removed") 
 end
 if str:find("check_gravity|1") and not options.check_gravity then 
-options.check_gravity = true overlayText("Anti Gravity Mode `2Enable") 
+options.check_gravity = true overlayText("Anti Gravity Mode `2Added") 
 elseif str:find("check_gravity|0") and options.check_gravity then 
 options.check_gravity = false overlayText("Anti Gravity Mode `4Removed") 
 end
 if str:find("check_aimbot|1") and not options.check_aimbot then 
-options.check_aimbot = true overlayText("Aim Bot Mode `2Enable") 
+options.check_aimbot = true overlayText("Aim Bot Mode `2Added") 
 elseif str:find("check_aimbot|0") and options.check_aimbot then 
 options.check_aimbot = false overlayText("Aim Bot Mode `4Removed") 
 end
 if str:find("check_autospam|1") and not options.check_autospam then 
-options.check_autospam = true overlayText("Auto Spam Mode `2Enable") 
+options.check_autospam = true overlayText("Auto Spam Mode `2Added") 
 elseif str:find("check_autospam|0") and options.check_autospam then 
 options.check_autospam = false overlayText("Auto Spam Mode `4Removed") 
 end
 if str:find("check_gems|1") and not options.check_gems then 
-options.check_gems = true overlayText("Auto Take Gems Mode `2Enable") 
+options.check_gems = true overlayText("Auto Take Gems Mode `2Added") 
 elseif str:find("check_gems|0") and options.check_gems then 
 options.check_gems = false overlayText("Auto Take Gems Mode `4Removed") 
 end
 if str:find("check_lonely|1") and not options.check_lonely then 
 options.check_lonely = true overlayText("lonely Mode `2Enable") 
 elseif str:find("check_lonely|0") and options.check_lonely then 
-options.check_lonely = false overlayText("Lonely Mode `2Enable") 
+options.check_lonely = false overlayText("Lonely Mode `4Removed") 
 end
 if str:find("check_ignoreo|1") and not options.check_ignoreo then 
-options.check_ignoreo = true overlayText("Ignore Others Drop Mode `2Enable") 
+options.check_ignoreo = true overlayText("Ignore Others Drop Mode `2Added") 
 elseif str:find("check_ignoreo|0") and options.check_ignoreo then 
 options.check_ignoreo = false overlayText("Ignore Others Drop Mode `4Removed") 
 end
 if str:find("check_ignoref|1") and not options.check_ignoref then 
-options.check_ignoref = true overlayText("Ignore Others Compeletely Mode `2Enable") 
+options.check_ignoref = true overlayText("Ignore Others Compeletely Mode `2Added") 
 elseif str:find("check_ignoref|0") and options.check_ignoref then 
 options.check_ignoref = false overlayText("Ignore Others Compeletely Mode `4Removed") 
 end
+if str:find("check_modfly|1") and not options.check_modfly then
+options.check_modfly = true ChangeValue("[C] modfly", true) overlayText("Modfly Mode `2Added")
+elseif str:find("check_modfly|0") and options.check_modfly then
+options.check_modfly = false ChangeValue("[C] modfly", false) overlayText("Modfly Mode `4Removed")
+end
+if str:find("check_antiportal|1") and not options.check_antiportal then
+options.check_antiportal = true ChangeValue("[C] Anti portal", true) overlayText("Anti Portal Mode `2Added")
+elseif str:find("check_antiportal|0") and options.check_antiportal then
+options.check_antiportal = false ChangeValue("[C] Anti portal", false) overlayText("Anti Portal Mode `4Removed")
+end
+if str:find("check_antiwater|1") and not options.check_antiwater then
+options.check_antiwater = true ChangeValue("[C] Anti water", true) overlayText("Anti Water Mode `2Added")
+elseif str:find("check_antiwater|0") and options.check_antiwater then
+options.check_antiwater = false ChangeValue("[C] Anti water", false) overlayText("Anti Water Mode `4Removed")
+end
 
---button pull
+--NetID Function Button to Player--
 if str:find("action|wrench\n|netid|(%d+)") then 
   local id = str:match("action|wrench\n|netid|(%d+)")
   local netid0 = tonumber(id)
@@ -1128,14 +1654,16 @@ if str:find("action|wrench\n|netid|(%d+)") then
       if plr.netid == netid0 then
           if plr.netid == localPlayer.netid then
               if CONFIG.AUTO_PULL then
-                  waklogs("`w[`4Oops`w] `9Can't pull your self sir")
+                  waklogs("`w[`4Oops`w] `9Can't `cPull `wyour self sir")
                   return true
               elseif CONFIG.AUTO_KICK then
-                  waklogs("`w[`4Oops`w] `9Can't kick your self sir")
+                  waklogs("`w[`4Oops`w] `9Can't `4Kick `wyour self sir")
                   return true
               elseif CONFIG.AUTO_BAN then
-                  waklogs("`w[`4Oops`w] `9Can't ban your self sir")
+                  waklogs("`w[`4Oops`w] `9Can't `bBan `wyour self sir")
                   return true
+              elseif CONFIG.FAST_TRADE then
+                  waklogs("`w[`4Oops`w] `9Can't `#Trade `wyour self sir")
               end
           else
               if CONFIG.AUTO_PULL then
@@ -1151,75 +1679,107 @@ if str:find("action|wrench\n|netid|(%d+)") then
               elseif CONFIG.AUTO_BAN then
                   SendPacket(2, "action|dialog_return\ndialog_name|popup\nnetID|"..id.."|\nbuttonClicked|world_ban")
                   return true
+              elseif CONFIG.FAST_TRADE then
+                  SendPacket(2, "action|dialog_return\ndialog_name|popup\nnetID|" ..id.. "|\nbuttonClicked|trade")
+                  return true
+              elseif CONFIG.VIEW_INV then
+                  SendPacket(2, "action|dialog_return\ndialog_name|popup\nnetID|" ..id.. "|\nbuttonClicked|viewinv")
+                  return true
               end
           end
       end
   end
 end
 
-if str:find("buttonClicked|pullmode") or str:find("/wpl") then
-  if str:match("buttonClicked|pullmode") or str:match("/wpl")then
+-- Wrench Shortcut Menu --
+if str:find("buttonClicked|pullmode") or str:find("/pl") then
+  if str:match("buttonClicked|pullmode") or str:match("/pl")then
   if not CONFIG.AUTO_PULL then
     CONFIG.AUTO_PULL = true
     CONFIG.AUTO_KICK = false
     CONFIG.AUTO_BAN = false
-    say("Pull Mode `2Enabled")
+    say("`cPull `0Mode `2Enabled")
       else
         CONFIG.AUTO_PULL = false
         CONFIG.AUTO_KICK = false
         CONFIG.AUTO_BAN = false
-        say("Pull Mode `4Disable")
+        say("`cPull `wMode `4Disabled")
        end
      return true
   end
 end
 
-if str:find("buttonClicked|kickmode") or str:find("/wkk")then
-  if str:match("buttonClicked|kickmode") or str:match("/wkk")then
+if str:find("buttonClicked|kickmode") or str:find("/kc")then
+  if str:match("buttonClicked|kickmode") or str:match("/kc")then
   if not CONFIG.AUTO_KICK then
     CONFIG.AUTO_PULL = false
     CONFIG.AUTO_KICK = true
     CONFIG.AUTO_BAN = false
-    say("Kick Mode `2Enabled")
+    say("`4Kick `wMode `2Enabled")
       else
         CONFIG.AUTO_PULL = false
         CONFIG.AUTO_KICK = false
         CONFIG.AUTO_BAN = false
-        say("Kick Mode `4Disable")
+        say("`4Kick `wMode `4Disabled")
        end
      return true
   end
 end
 
-if str:find("buttonClicked|banmode") or str:find("/wban")then
-  if str:match("buttonClicked|banmode") or str:match("/wban") then
+if str:find("buttonClicked|banmode") or str:find("/bn")then
+  if str:match("buttonClicked|banmode") or str:match("/bn") then
   if not CONFIG.AUTO_BAN then
     CONFIG.AUTO_PULL = false
     CONFIG.AUTO_KICK = false
     CONFIG.AUTO_BAN = true
-    say("Ban Mode `2Enabled")
+    say("`bBan `wMode `2Enabled")
       else
         CONFIG.AUTO_PULL = false
         CONFIG.AUTO_KICK = false
         CONFIG.AUTO_BAN = false
-        say("Ban Mode `4Disable")
+        say("`bBan `wMode `4Disabled")
        end
      return true
   end
 end
 
-if str:find("/woff") then
-  if str:match("/woff") then
+if str:find("buttonClicked|wrenchoff") or str:find("/woff") then
+  if str:match("buttonClicked|wrenchoff") or str:match("/woff") then
     CONFIG.AUTO_PULL = false
     CONFIG.AUTO_KICK = false
     CONFIG.AUTO_BAN = false
-    say("Disabled Wrench Mode")
-     return true
+    CONFIG.FAST_TRADE = false
+    CONFIG.VIEW_INV = false
+    say("`4Disabled `7Wrench Mode")
+    return true
   end
 end
 
-if str:find("/rect") then
-  if str:match("/rect") then
+if str:find("/trd") then
+  if CONFIG.FAST_TRADE then
+    CONFIG.FAST_TRADE = false
+    say("`cFast Trade `4Disabled")
+  else
+    CONFIG.FAST_TRADE = true
+    say("`cFast Trade `2Enabled")
+  end
+  return true
+end
+
+if str:find("/inv") then
+  if CONFIG.VIEW_INV then
+    CONFIG.VIEW_INV = false
+    say("`cView `9Inventory `4Disabled")
+  else
+    CONFIG.VIEW_INV = true
+    say("`cView `9Inventory `2Enabled")
+  end
+  return true
+end
+
+
+if str:find("/rowr") then
+  if str:match("/rowr") then
     if not CONFIG.RANDOM_CHAT then
       CONFIG.RANDOM_CHAT = true
       waklogs("Random Emoji Chat `2Enabled")
@@ -1432,12 +1992,12 @@ local function hook_1(varlist)
       if varlist[1]:find("Spam detected!") then
           return true
       elseif varlist[1]:find("Unknown command.") then
-        waklogs("`4Unknown command. `9Enter /menu or click social portal for valid list commands.")
+        waklogs("`b[`4unrecognized Commands`b] `cType /menu or use the social portal to view the list of available commands.")
           return true
       end
   end
   if varlist[0] == "OnSDBroadcast" then
-    overlayText("Succes Blocked `4SDB!")
+    overlayText("`cSuperduperbroadcast `4Blocked!")
     return true
   end
   return false
@@ -1554,7 +2114,7 @@ local function cvhook(varlist)
     if #numbers >= 2 then
         local depositAmount = numbers[1]
         local bankBalance = numbers[2]
-        overlayText("You Deposited `#"..depositAmount.." `9Blue Gem Locks! You have `#"..bankBalance.." `9in the bank now.")
+        overlayText("`wYou've Deposited `2"..depositAmount.." `eBlue Gem Locks! `wYou have `2"..bankBalance.." `win the bank now.")
     end
     return true
   end
@@ -1563,7 +2123,7 @@ local function cvhook(varlist)
   end
 
     -- Block Withdrawn Dialog
-    if varlist[0]:find("OnConsoleMessage") and varlist[1]:find("`2Withdrawn") then
+    if varlist[0]:find("OnConsoleMessage") and varlist[1]:find("`$Withdrawn") then
         local numbers = extractWithdrawNumbers(varlist[1])
         if #numbers >= 2 then
             local withdrawAmount = numbers[1]
@@ -1572,7 +2132,7 @@ local function cvhook(varlist)
         end
         return true
     end
-  if varlist[0]:find("OnTalkBubble") and varlist[2]:find("`2Withdrawn") then
+  if varlist[0]:find("OnTalkBubble") and varlist[2]:find("`$Withdrawn") then
     return true
   end
 end
@@ -1583,7 +2143,7 @@ AddHook("onvariant", "join_world", function(var)
       showBalance()
   end
   if var[0]:find("OnConsoleMessage") and var[1]:find("Moving to the last location") then
-    waklogs("Moving back to last location")
+    waklogs("`aMoving back to last location")
     return true
   end
 end)
@@ -1635,7 +2195,7 @@ local function addCollectLog(items)
     -- Konversi ke unit tertinggi
     local convertedAmount, unitName, unitColor = convertToHighestUnit(totalWLs)
     
-    local logMessage = string.format("[%s] %s `oCollected `w%d `%s%s", 
+    local logMessage = string.format("[%s] %s `0Collected `w%d `%s%s", 
         timestamp, GetLocal().name, convertedAmount, unitColor, unitName)
     local chatMessage = string.format("`w[`b%s`w] `0Collected `w%d `%s%s", 
         removeColorAndSymbols(GetLocal().name), convertedAmount, unitColor, unitName)
@@ -1653,10 +2213,10 @@ end
 local function combined_hook(varlist)
     if varlist[0] == "OnConsoleMessage" then
         if varlist[1]:find("Your atoms are suddenly") then
-            overlayText("Ghost Mode `2Enable")
+            overlayText("`aGhost Mode `2Enable")
             return true
         elseif varlist[1]:find("Your body stops shimmering") then
-            overlayText("Ghost Mode `4Removed")
+            overlayText("`aGhost Mode `4Removed")
             return true
         elseif varlist[1]:find("Applying cheats") then
             return true
@@ -1687,7 +2247,7 @@ local function combined_hook(varlist)
         local message = varlist[2]
         local patterns = {
             {pattern = "Dropped `2(%d+) `9World Lock", color = "9", name = "World Lock", value = 1},
-            {pattern = "Dropped `2(%d+) `1Diamond Lock", color = "1", name = "Diamond Lock", value = 100},
+            {pattern = "Dropped `2(%d+) `cDiamond Lock", color = "c", name = "Diamond Lock", value = 100},
             {pattern = "Dropped `2(%d+) `eBlue Gem Lock", color = "e", name = "Blue Gem Lock", value = 10000},
             {pattern = "Dropped `2(%d+) `bBlack Gem Lock", color = "b", name = "Black Gem Lock", value = 1000000}
         }
@@ -1712,7 +2272,7 @@ local function hook_donation(varlist)
       if donor and amount and item then
           local AmountDonation = tonumber(amount)
           table.insert(LogsDonate, {
-              actd = "\nadd_label_with_icon|small|"..donor.." `oDonated `w"..AmountDonation.." `o"..item.." into the Donation Box at "..os.date("%H:%M on %d/%m").."|left|14128|\n", 
+              actd = "\nadd_label_with_icon|small|`c"..donor.." `oDonated `w"..AmountDonation.." `o"..item.." into the Donation Box at "..os.date("%H:%M on %d/%m").."|left|14128|\n", 
               netid = GetLocal().netID, 
               acts = donor .. " Donated `w" ..AmountDonation.. " `o"..item.." into the Donation Box"
           })
@@ -1871,26 +2431,26 @@ AddHook("onsendpacket", "mypackageid", function(type, pkt)
       return true
   elseif pkt:find("/blue") then 
     if invenIDs(11550) < 1 then
-      overlayText("You need at least 1 Black Gem Lock to convert to Blue Gem Lock")
+      overlayText("`wYou need at least 1 `bBlack Gem Lock `wto exchange for a `eBlue Gem Lock")
     else
       SendPacket(2,"action|dialog_return\ndialog_name|info_box\nbuttonClicked|make_bluegl") 
-      say("Succes Convert `bBlack Gem Lock `9to `eBlue Gem Lock")
+      say("`7Converted `bBlack Gem Lock `wto `eBlue Gem Lock")
     end
       return true 
   elseif pkt:find("/blek") then 
     if invenIDs(7188) < 100 then
-      overlayText("You need 100 Blue Gem Lock to convert to Black Gem Lock")
+      overlayText("`wYou need 100 `eBlue Gem Lock `wto exchange for a `bBlack Gem Lock")
     else
       SendPacket(2,"action|dialog_return\ndialog_name|info_box\nbuttonClicked|make_bgl") 
-      say("Succes Convert `eBlue Gem Lock `9to `bBlack Gem Lock") 
+      say("`7Converted `eBlue Gem Lock `wto `bBlack Gem Lock") 
     end
       return true 
   elseif pkt:find("/cdl") then 
     if invenIDs(7188) < 1 then
-      overlayText("You need at least 1 Blue Gem Lock to convert to Diamond Lock")
+      overlayText("`wYou need at least 1 `eBlue Gem Lock `wto exchange for a `cDiamond Lock")
     else
       DOUBLE_CLICK_ITEM(7188)
-      say("Succes Convert `eBlue Gem Lock `9to `1Diamond Lock") 
+      say("`7Converted `eBlue Gem Lock `wto `1Diamond Lock") 
     end
       return true 
   elseif pkt:find("/dp (%d+)") then
@@ -1980,6 +2540,7 @@ if match_found == true then
   say("`#Proxy `4Injected `wby [" ..GetLocal().name.. "`w]")
   showBalance()
   main()
+  btk()
   Sleep(100)
   else
     waklogs("`w[ ? ] `2Verifying `wUserID...")
