@@ -3,7 +3,7 @@
 RemoveHooks()
 tabel_uid = {"327723"}
 
-update_info = "`2Updated `won [ 3 March 2025 ]"
+update_info = "`2Updated `won [ 11 March 2025 ]"
 local wl = 242
 local dl = 1796
 local bgl = 7188
