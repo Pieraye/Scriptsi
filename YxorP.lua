@@ -1,7 +1,7 @@
 -- [ WAKKA PROXY ] --
 
 RemoveHooks()
-tabel_uid = {"327723"}
+tabel_uid = {"327723", "515983"}
 
 update_info = "`2Updated `won [ 11 March 2025 ]"
 local wl = 242
