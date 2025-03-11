@@ -1,5 +1,7 @@
+-- [ WAKKA PROXY ] --
+
 RemoveHooks()
-tabel_uid = {"327723", "632874"}
+tabel_uid = {"327723"}
 
 update_info = "`2Updated `won [ 3 March 2025 ]"
 local wl = 242
@@ -35,10 +37,12 @@ local CONFIG = {
   RANDOM_CHAT = false
 }
 local options = {
-  check_autospam = false, 
-  check_emoji = false,
-  check_echat = false
-}
+    check_autospam = false, 
+    check_emoji = false,
+    check_echat = false
+  }
+
+userId = tostring(GetLocal().userid)
 
 local AutoSpam, SpamText, SpamDelay = false, "", 5000
 local activeBlinkskin = false
@@ -113,6 +117,7 @@ local options = {
   check_lonely = false,
   check_ignoreo = false,
   check_gems = false,
+  check_autopull = false,
   check_ignoref = false,
   check_autospam = false,
   check_emoji = false,
@@ -290,475 +295,7 @@ local function getCurrentTime()
   return currentTime, currentTimeInSeconds
 end
 
--- BTK Part Function --
-data = {}
-datalock = {}
-local pull = false
-local kick = false
-local ban = false
-local cbgl = true
-local putchand = true
-local taxset = 0
-local Growid = GetLocal().name
-local time_now = os.date("`1%H:%M`0, `1%d-%m-%Y")
 
-function cty(id,id2,amount)
-for _, inv in pairs(GetInventory()) do
-if inv.id == id then
-if inv.amount < amount then
-SendPacketRaw(false, { type = 10, value = id2})
-end end end end
-
-function removeColorAndSymbols(str)
-    cleanedStr = string.gsub(str, "`(%S)", '')
-    cleanedStr = string.gsub(cleanedStr, "Dr%.%s*", '')
-    cleanedStr = string.gsub(cleanedStr, "%s*%[BOOST%]", '')
-    cleanedStr = string.gsub(cleanedStr, "%(%d+%)", '')
-    cleanedStr = string.gsub(cleanedStr, "`{2}|(~{2})", '')
-    return cleanedStr
-end
-
-function wear(id)
-SendPacketRaw(false, { type = 10, value = id})
-end
-
-function Waklogs(text)
-LogToConsole("`w[`b@.wkka`w] `0"..text)
-end
-
-function say(txt)
-SendPacket(2,"action|input\ntext|"..txt)
-end
-
-function btk()
-function take()
-tiles = {
-{xt1,yt1},
-{xt2,yt2},
-{xt3,yt3},
-{xt4,yt4}
-}
-objects = GetObjectList()
-    for _, obj in pairs(objects) do
-        for _, tiles in pairs(tiles) do
-            if (obj.pos.x)//32 == tiles[1] and (obj.pos.y)//32 == tiles[2] then
-SendPacketRaw(false, {type=11,value=obj.oid,x=obj.pos.x,y=obj.pos.y})
-table.insert(data, {id=obj.id, count=obj.amount})
-            end
-        end
-    end
-Data()
-data = {}
-end
-
-function Data()
-Amount = 0
-for _, list in pairs(data) do
-Name = ""
-if list.id == 11550 then
-Name = "`bBlack Gem Lock"
-Amount = Amount + list.count * 1000000
-elseif list.id == 7188 then
-Name = "`cBlue Gem Lock"
-Amount = Amount + list.count * 10000
-elseif list.id == 1796 then
-Name = "`1Diamond Lock"
-Amount = Amount + list.count * 100
-elseif list.id == 242 then
-Name = "`9World Lock"
-Amount = Amount + list.count
-end end
-data = {}
-end
-
-function drop(id,amount)
-SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|"..id.."|\nitem_count|"..amount.."\n\n")
-end
-
-function inv(id)
-for _, item in pairs(GetInventory()) do
-if (item.id == id) then
-return item.amount
-end end
-return 0
-end
-
-function tax(percent,maxvalue)
-if tonumber(percent) and tonumber(maxvalue) then
-return (maxvalue*percent)/100
-end end
-
-function eattax(x, y)
-if math.abs(GetLocal().pos.x // 32 - x) > 8 or math.abs(GetLocal().pos.y // 32 - y) > 8 then
-return nil end
-if GetTiles(x, y).collidable then
-return nil end
-local Z = 0
-if not GetTiles(x + 1, y).collidable then
-Z = 1
-elseif not GetTiles(x - 1, y).collidable then
-Z = -1
-else
-return nil end
-SendPacketRaw(false, { type = 0, x = (x + Z) * 32, y = y * 32, state = (Z == 1 and 48 or 32) })
-end
-
-function takegems()
-Count = 0
-data = {}
-objects = GetObjectList()
-for _, obj in pairs(objects) do
-for _, tiles in pairs(tile.pos1) do
-if obj.id == 112 and (obj.pos.x)//32 == tiles.x and (obj.pos.y)//32 == tiles.y then
-Count = Count + obj.amount
-SendPacketRaw(false, {type=11,value=obj.oid,x=obj.pos.x,y=obj.pos.y})
-end
-end
-end
-table.insert(data, Count)
-Count = 0
-for _, obj in pairs(objects) do
-for _, tiles in pairs(tile.pos2) do
-if obj.id == 112 and (obj.pos.x)//32 == tiles.x and (obj.pos.y)//32 == tiles.y then
-SendPacketRaw(false, {type=11,value=obj.oid,x=obj.pos.x,y=obj.pos.y})
-Count = Count + obj.amount
-end
-end
-end
-table.insert(data, Count)
-Count = 0
-if data[1] > data[2] then
-SendPacket(2, "action|input\n|text|`w[Player 1 `2Win`w] (gems) `2" .. data[1] .. " `b/ `4" .. data[2] .. " `w(gems) [Player 2 `4Lose`w]")
-elseif data[1] == data[2] then
-SendPacket(2, "action|input\n|text|`0[TIE] (gems) `0".. data[1] .." `b/ `0".. data[2] .." `0(gems) [TIE]")
-else
-SendPacket(2, "action|input\n|text|`w[Player 1 `4Lose`w] (gems) `4" .. data[1] .. " `b/ `2" .. data[2].. " `w(gems) [Player 2 `2Win`w]")
-end
-data = {}
-end
-
-AddHook("onsendpacket", "setering", function(type,str)
-if str:find("action|wrench\n|netid|(%d+)") then 
-id = str:match("action|wrench\n|netid|(%d+)")
-if pull == true then
-netid0 = tonumber(id)
-for _, plr in pairs(GetPlayerList()) do
-if plr.netid == netid0 then
-SendPacket(2,"action|dialog_return\ndialog_name|popup\nnetID|"..id.."|\nbuttonClicked|pull")
-SendPacket(2, "action|input\n|text|`b(cool) Gas Sir? `w[`0"..plr.name.."`w]")
-return true
-elseif kick == true then
-SendPacket(2,"action|dialog_return\ndialog_name|popup\nnetID|"..id.."|\nbuttonClicked|kick")
-return true
-elseif ban == true then
-SendPacket(2,"action|dialog_return\ndialog_name|popup\nnetID|"..id.."|\nbuttonClicked|world_ban")
-return true end end end end
-if str:find("/down") then
-xhost = GetLocal().pos.x//32
-yhost = GetLocal().pos.y//32
-xt1 = xhost - 3
-yt1 = yhost - 2
-xt2 = xhost + 3
-yt2 = yhost - 2
-xt3 = xt1 - 1
-yt3 = yt1
-xt4 = xt2 + 1
-yt4 = yt1
-x1 = xhost - 4
-y1 = yhost - 2
-x2 = xhost + 4
-y2 = yhost - 2
-xgem1 = xhost - 3
-ygem1 = yhost
-xgem2 = xgem1 - 1
-xgem3 = xgem1 - 2
-tile = {
-pos1 = { 
-{x = xgem1, y = ygem1}, {x = xgem2, y = ygem1}, {x = xgem3, y = ygem1}
-},
-pos2 = {
-{x = xgemm1, y = ygemm1}, {x = xgemm2, y = ygemm1}, {x = xgemm3, y = ygemm1}
-}
-}
-xgemm1 = xhost + 3
-ygemm1 = yhost
-xgemm2 = xgemm1 + 1
-xgemm3 = xgemm1 + 2
-tile = {
-pos1 = { 
-{x = xgem1, y = ygem1}, {x = xgem2, y = ygem1}, {x = xgem3, y = ygem1}
-},
-pos2 = {
-{x = xgemm1, y = ygemm1}, {x = xgemm2, y = ygemm1}, {x = xgemm3, y = ygemm1}
-}
-}
-Waklogs("`aBTK Mode `9Chandelier `won `1Down")
-SendPacket(2, "action|input\n|text|(clap) Ready to Play")
-return true
-end
-if str:find("/top") then
-xhost = GetLocal().pos.x//32
-yhost = GetLocal().pos.y//32
-xt1 = xhost - 3
-yt1 = yhost
-xt2 = xhost + 3
-yt2 = yhost 
-xt3 = xt1 - 1
-yt3 = yt1
-xt4 = xt2 + 1
-yt4 = yt1
-x1 = xhost - 4
-y1 = yhost
-x2 = xhost + 4
-y2 = yhost 
-xgem1 = xhost - 3
-ygem1 = yhost - 2
-xgem2 = xgem1 - 1
-xgem3 = xgem1 - 2
-tile = {
-pos1 = { 
-{x = xgem1, y = ygem1}, {x = xgem2, y = ygem1}, {x = xgem3, y = ygem1}
-},
-pos2 = {
-{x = xgemm1, y = ygemm1}, {x = xgemm2, y = ygemm1}, {x = xgemm3, y = ygemm1}
-}
-}
-xgemm1 = xhost + 3
-ygemm1 = yhost - 2
-xgemm2 = xgemm1 + 1
-xgemm3 = xgemm1 + 2
-tile = {
-pos1 = { 
-{x = xgem1, y = ygem1}, {x = xgem2, y = ygem1}, {x = xgem3, y = ygem1}
-},
-pos2 = {
-{x = xgemm1, y = ygemm1}, {x = xgemm2, y = ygemm1}, {x = xgemm3, y = ygemm1}
-}
-}
-Waklogs("`aBTK Mode `9Chandelier `won `3Top")
-SendPacket(2, "action|input\n|text|(clap) Ready to Play")
-return true
-end
-if str:find("/tax (%d+)") then
-newtax = str:match("/tax (%d+)")
-taxset = newtax
-Waklogs("`4Tax `wSet to `2".. taxset.."%")
-return true
-end
-if str:find("/tb") then
-take()
-tax = math.floor(Amount * taxset / 100)
-jatuh = Amount - tax
-all_bet = Amount
-betdl = math.floor( jatuh / 100 )
-bet = math.floor(Amount / 2)
-SendVariantList({[0] = "OnTextOverlay" , [1] = "`w[`0P1: `2"..bet.."`w]`bVS`w[`0P2 :`2"..bet.."`w]\n`w[`0Tax: `2"..taxset.." %`w]\n`w[`0Drop to Win: `2"..jatuh.." `9WLS`w]\n`w[`0Total Drop: `2"..all_bet.." `1DLS`w]"})
-Waklogs("`w[`0P1: `2"..bet.."`w]`bVS`w[`0P2 :`2"..bet.."`w] `w[`0Tax: `2"..taxset.."%`w] `w[`0Drop to Win: `2"..jatuh.." `9WLS`w]")
-return true
-end
-if str:find("/tg") then
-takegems()
-return true
-end
-if str:find("/1")then
-ireng = math.floor(jatuh/1000000)
-bgl = math.floor(jatuh/10000)
-jatuh = jatuh - bgl*10000 
-dl = math.floor(jatuh/100)
-wl = jatuh % 100
-FindPath(math.floor(xt1),math.floor(yt1))
-DropMode = true
-hasil = (ireng ~= 0 and ireng.."`bBlack Gem Lock`0" or "`0").." "..(bgl ~= 0 and bgl.."`eBlue Gem Lock`0" or "`0").." "..(dl ~= 0 and dl.."`1Diamond Lock`0" or "`0").." "..(wl ~= 0 and wl.."`9World Lock`0" or "`0")
-SendPacket(2, "action|input\n|text|`4Drops `w["..hasil.."`w]")
-return true end
-if str:find("/2") then
-ireng = math.floor(jatuh/1000000)
-bgl = math.floor(jatuh/10000)
-jatuh = jatuh - bgl*10000 
-dl = math.floor(jatuh/100)
-wl = jatuh % 100
-FindPath(math.floor(xt2) + 2,math.floor(yt2))
-DropMode = true
-hasil = (ireng ~= 0 and ireng.."`bBlack Gem Lock`0" or "`0").." "..(bgl ~= 0 and bgl.."`eBlue Gem Lock`0" or "`0").." "..(dl ~= 0 and dl.."`1Diamond Lock`0" or "`0").." "..(wl ~= 0 and wl.."`9World Lock`0" or "`0")
-SendPacket(2, "action|input\n|text|`4Drops `w["..hasil.."`w]")
-return true end
-if str:find("/ar (%d+)") then
-count = str:match("/ar (%d+)")
-SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|4604|\nitem_count|"..count)
-return true end
-if str:find("/clov (%d+)") then
-count = str:match("/clov (%d+)")
-SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|528|\nitem_count|"..count)
-return true end
-if str:find("/lolerfp") then
-BTKMENU()
-return true
-end
-return false end)
-function bersih(str)
-local cleanedStr = string.gsub(str, "`(%S)", '')
-cleanedStr = string.gsub(cleanedStr, "`{2}|(~{2})", '')
-return cleanedStr
-end
-
-function theIDs(id) 
-	for _, inv in pairs(GetInventory()) do 
-		if inv.id == id then 
-			return inv.amount 
-		end
-	end 
-	return 0 
-end 
-AddHook("onvariant", "join_world", function(var)
-  if var[0]:find("OnRequestWorldSelectMenu") then 
-    datalock = {} 
-    wl_balance = theIDs(242) 
-    dl_balance = theIDs(1796) * 100 
-    bgl_balance = theIDs(7188) * 10000 
-    black_balance = theIDs(11550) * 1000000 
-    total_balance = wl_balance + dl_balance + bgl_balance + black_balance 
-    Waklogs("Owned `w" ..black_balance.. " `bBLACK `w" ..bgl_balance.. " `eBGL `w" ..dl_balance.. " `cDL `wAnd " ..wl_balance.. " `9WL")
-    Waklogs("Your `8Ba`9la`6n`4ce:`2 "..total_balance.." `9World Lock")
-  end
-  if var[0]:find("OnConsoleMessage") and var[1]:find("Welcome back,") then
-    datalock = {} 
-    wl_balance = theIDs(242) 
-    dl_balance = theIDs(1796) * 100 
-    bgl_balance = theIDs(7188) * 10000 
-    black_balance = theIDs(11550) * 1000000 
-    total_balance = wl_balance + dl_balance + bgl_balance + black_balance 
-    Waklogs("Owned `w" ..black_balance.. " `bBLACK `w" ..bgl_balance.. " `eBGL `w" ..dl_balance.. " `cDL `wAnd " ..wl_balance.. " `9WL")
-    Waklogs("Your `8Ba`9la`6n`4ce:`2 "..total_balance.." `9World Lock")
-  end
-end)
-
-AddHook("onvariant", "variabel", function(var)
-    if var[0]:find("OnDialogRequest") and var[1]:find("add_player_info") then
-        return true
-    end
-
-    if var[0]:find("OnConsoleMessage") and var[1]:find("Spam detected!") then
-        return true
-    end
-
-    if var[0]:find("OnConsoleMessage") and var[1]:find("Unknown command.") then
-        Waklogs("`b[`4unrecognized Commands`b] `cType /menu or use the social portal to view the list of available commands.")
-        return true
-    end
-
-    return false
-end)
-
-while true do
-if dawlock then
-if ireng then
-drop(11550,ireng)
-Sleep(500)
-end
-if bgl then
-drop(7188,bgl)
-Sleep(500)
-end
-if dl then
-drop(1796,dl)
-Sleep(500)
-end
-if wl then
-drop(242,wl)
-Sleep(500)
-end
-dawlock = false
-end
-Sleep(3000)
-if DropMode then
-if bgl then
-SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|7188|\nitem_count|"..bgl)
-Sleep(500)
-end
-if dl then
-SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|1796|\nitem_count|"..dl)
-Sleep(500)
-end
-if wl then
-SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|242|\nitem_count|"..wl)
-Sleep(500)
-end
-jatuh = nil
-DropMode = false
-if putchand then
-FindPath(xgem1,ygem1)
-Sleep(300)
-SendPacketRaw(false, {
-type = 3,
-value = 5640,
-x = GetLocal().pos.x,
-y = GetLocal().pos.y,
-px = xgem1,
-py = ygem1,
-state = 16
-})
-FindPath(xgem2,ygem1)
-Sleep(200)
-SendPacketRaw(false, {
-type = 3,
-value = 5640,
-x = GetLocal().pos.x,
-y = GetLocal().pos.y,
-px = xgem1-1,
-py = ygem1,
-state = 16
-})
-FindPath(xgem3,ygem1)
-Sleep(200)
-SendPacketRaw(false, {
-type = 3,
-value = 5640,
-x = GetLocal().pos.x,
-y = GetLocal().pos.y,
-px = xgem1-2,
-py = ygem1,
-state = 16
-})
-Sleep(200)
-FindPath(xgemm1,ygemm1)
-Sleep(300)
-SendPacketRaw(false, {
-type = 3,
-value = 5640,
-x = GetLocal().pos.x,
-y = GetLocal().pos.y,
-px = xgemm1,
-py = ygemm1,
-state = 16
-})
-FindPath(xgemm2,ygemm1)
-Sleep(200)
-SendPacketRaw(false, {
-type = 3,
-value = 5640,
-x = GetLocal().pos.x,
-y = GetLocal().pos.y,
-px = xgemm1+1,
-py = ygemm1,
-state = 16
-})
-FindPath(xgemm3,ygemm1)
-Sleep(200)
-SendPacketRaw(false, {
-type = 3,
-value = 5640,
-x = GetLocal().pos.x,
-y = GetLocal().pos.y,
-px = xgemm1+2,
-py = ygemm1,
-state = 16
-})
-FindPath(xhost, yhost)
-end
-end
-Sleep(2000)
-end
-end
 
 function main()
 local function ShowMainDialog()
@@ -783,11 +320,10 @@ add_button_with_icon|profile_menu|`0Your Profile|staticBlueFrame|12436||
 add_button_with_icon|command_abilities|`0Abilities Menu|staticBlueFrame|14404||
 add_button_with_icon|spam_menu|`0Spam Menu|staticBlueFrame|15744||
 add_button_with_icon|wrenchmenu|`0Wrench Menu|staticBlueFrame|14714||
-add_button_with_icon|command_list|`0Command List|staticBlueFrame|658||
+add_button_with_icon|command_list|`0Command List|staticBlueFrame|2918||
 add_button_with_icon|social_portal|`0Social Portal|staticBlueFrame|1366||
 add_custom_break|
 end_list|
-add_button_with_icon|btk_menu|`0BTK Menu|staticBlueFrame|14542||
 add_button_with_icon|chatting_menu|`0Chat Menu|staticBlueFrame|8282||
 add_button_with_icon|skin_menu|`0Skin Menu|staticBlueFrame|15772||
 add_button_with_icon|cctv_menu|`0LOGs|staticBlueFrame|1436||
@@ -838,11 +374,12 @@ add_label_with_icon|small|`7/re `0: Rejoin Current World|left|3802|
 add_label_with_icon|small|`7/res `0: Fast Respawn|left|3896|
 add_label_with_icon|small|`7/g `0: Fast Ghost|left|3106|
 add_label_with_icon|small|`7/gs `0: Shows Growscan Menu|left|6016|
+add_label_with_icon|small|`7/p `0: Drop A Single Item (E.x /p dirt 1)|left|14574|
 add_spacer|small|
 add_label_with_icon|small|`4Casino Mode|left|758|
 add_label_with_icon|small|`9/reme `0: Shows Reme Result|left|3522|
 add_label_with_icon|small|`8/qeme `0: Shows Qeme Result|left|3522|
-add_label_with_icon|small|`7/normal `0: Normal Roullete Mode|left|3522|
+add_label_with_icon|small|`7/csn `0: Normal Roulette Mode|left|3522|
 add_spacer|small|
 add_quick_exit||
 add_button|command_back|`9Back|noflags|0|0|
@@ -861,6 +398,7 @@ add_spacer|small|
 add_textbox|`0Auto Part |left|
 add_checkbox|check_autospam|`0Auto Spam Mode|]] .. CHECKBOX(options.check_autospam) .. [[|
 add_checkbox|check_gems|`0Auto Take Gems Mode|]] .. CHECKBOX(options.check_gems) .. [[|
+add_checkbox|check_autopull|`0Auto Pull Mode|]] .. CHECKBOX(options.check_autopull) ..[[|
 add_textbox|`0Abilities Part |left|
 add_checkbox|check_speed|`0Speed Mode|]] .. CHECKBOX(options.check_speed) .. [[|
 add_checkbox|check_gravity|`0Gravity Mode|]] .. CHECKBOX(options.check_gravity) .. [[|
@@ -898,34 +436,6 @@ add_button|command_back|`9Back|noflags|0|0|
   SendVariantList(varlist_command)
 end
 
-local function ShowBtkDialog()
-  local varlist_command = {}
-  varlist_command[0] = "OnDialogRequest"
-  varlist_command[1] = [[
-set_default_color|`o
-add_label_with_icon|big|`aBTK `wHelper|left|14542|
-add_spacer|small|
-text_scaling_string|jakhelperbdjsjn|
-add_smalltext|`aBTK `7Commands|
-add_label_with_icon|small|`1/top `0: [ `9Chandelier `won `1Top `w]|left|340|
-add_label_with_icon|small|`3/down `0: [ `9Chandelier `won `3Down `w]|left|340|
-add_label_with_icon|small|`4/tax `0: [ Set `4Tax `won `2Percentage % `w]|left|9428|
-add_label_with_icon|small|`a/tb `0: [ Take Players `aBet `w]|left|6122|
-add_label_with_icon|small|`#/tg `0: [ Take The `#Gems `w]|left|5774|
-add_label_with_icon|small|`8/1 `0: [ Drop `2Win `wto Player `81 `w]|left|14406|
-add_label_with_icon|small|`9/2 `0: [ Drop `2Win `wto Player `92 `w]|left|14406|
-add_spacer|small|
-add_label_with_icon|big|`wDrops Consumable|left|6922|
-add_spacer|small|
-add_label_with_icon|small|`9/ar `0: [Drops `9Arroz Con Pollo`w]|left|4604|
-add_label_with_icon|small|`2/clov `0: [Drops `2Lucky Clover`w]|left|528|
-add_spacer|small|
-add_quick_exit||
-add_button|command_back|`9Back|noflags|0|0|
-]]
-  SendVariantList(varlist_command)
-end
-
 local function ShowWrenchDialog()
   local varlist_command = {}
   varlist_command[0] = "OnDialogRequest"
@@ -935,9 +445,11 @@ add_label_with_icon|big|`7Wrench Menu!|left|14714|
 add_spacer|small||
 text_scaling_string|jakhelperbdjsjn|
 add_smalltext|`7Shortcut Commands|
-add_label_with_icon|small|`c/pl `0: auto `cpull|left|3522|
-add_label_with_icon|small|`4/kc `0: auto `4kick|left|3522|
-add_label_with_icon|small|`b/bn `0: auto `bban|left|3522|
+add_label_with_icon|small|`c/pl `0: auto `cPull|left|3522|
+add_smalltext|`#Customize `cPull `w[`c/ptext `wSet Pull Text`w]|
+add_smalltext|`#Customize `cPull `w[`c/pdisplay `wShows Current Text]|
+add_label_with_icon|small|`4/kc `0: auto `4Kick|left|3522|
+add_label_with_icon|small|`b/bn `0: auto `bBan|left|3522|
 add_label_with_icon|small|`8/inv `0: to View `8Inventory|left|448|
 add_label_with_icon|small|`2/trd `0: Fast `2Trade|left|32|
 add_label_with_icon|small|`7/woff `0: to `4Disable `wWrench Mode|left|15590|
@@ -1048,9 +560,10 @@ set_default_color|`o
 add_label_with_icon|big|`#Proxy `wHelper |left|]] .. 7804 ..[[|
 add_smalltext|`#Discord `w[ `b.wkka `w]|
 add_spacer|small|
-add_label_with_icon|small|`wThanks for your Purchased!!! ]]..GetLocal().name..[[|left|9472|
+add_label_with_icon|small|`wThanks for your `2Purchased!|left|9472|
+add_label_with_icon|small|]]..GetLocal().name..[[|left|
 add_spacer|small||
-add_label_with_icon|big|`0Change Logs|left|6128|
+add_label_with_icon|big|`0Change Logs  (See Whats New)|left|6128|
 add_spacer|small|
 add_smalltext|`0]]..update_info..[[|
 add_url_button|Wakka|`#Discord Server|noflags|https://discord.com/channels/1235908581522673744/1247890148809506907|Would you like to Join `b@Wakka `#Discord Server`w?|0|0|
@@ -1075,7 +588,8 @@ add_smalltext|`wMaximum `2120 `wletters|
 add_text_input|SetSpamText||]]..SpamText..[[|120|
 add_spacer|small|
 add_quick_exit|
-end_dialog|SettingSpam|Close|Update|
+add_button|command_back|`9Back|noflags|0|0|
+end_dialog|SettingSpam|Close|Update Auto Spam|
 ]]
     SendVariantList(varlist_command)
 end
@@ -1228,7 +742,7 @@ add_text_input|colorchat|`wColor Chat :|]]..chat_color..[[|5|
 add_spacer|small|
 add_quick_exit|
 add_button|command_back|                 Back                |noflags|0|0|
-end_dialog|settingechat|    Close    |    Update   |
+end_dialog|settingechat|    Close    |    Update Chat   |
 ]]
   SendVariantList(varlist_command)
 end
@@ -1238,7 +752,7 @@ local function ShowCctvDialog()
   varlist_command[0] = "OnDialogRequest"
   varlist_command[1] = [[
 set_default_color|`o
-add_label_with_icon|big|CCTV & Donation Box Logs|left|1436|
+add_label_with_icon|big|`wLogs Capture|left|1436|
 add_spacer|small||
 text_scaling_string|jakhelperbdjsjn|
 add_button_with_icon|collect_menu|`2Collected `wLogs|staticBlueFrame|13808|
@@ -1263,7 +777,7 @@ local function ActivityLogPage()
   varlist_command[0] = "OnDialogRequest"
   varlist_command[1] = [[
 set_default_color|`o
-add_label_with_icon|big|Logs Collected Locks|left|13808|
+add_label_with_icon|big|`wLogs `2Collected `wLocks|left|13808|
 add_spacer|small|
 ]] .. table.concat(Action) .. [[
 add_button_with_icon||END_LIST|noflags|0||
@@ -1285,7 +799,7 @@ local function ActivityLogDrop()
   varlist_command[0] = "OnDialogRequest"
   varlist_command[1] = [[
 set_default_color|`o
-add_label_with_icon|big|Logs Dropped Locks|left|13810|
+add_label_with_icon|big|`wLogs `4Dropped `wLocks|left|13810|
 add_spacer|small|
 ]] .. table.concat(Actiondrop) .. [[
 add_button_with_icon||END_LIST|noflags|0||
@@ -1349,7 +863,7 @@ AddHook("OnSendPacket", "P", function(type, str)
             reme = 1
             qeme = 0
             normal = 0
-            say("Reme Mode `2Enable")
+            say("`4Reme `wMode `2Enable")
             RemoveHook("qeme_hook")
             RemoveHook("normal_hook")
             AddHook("onvariant", "reme_hook", printrr)
@@ -1357,7 +871,7 @@ AddHook("OnSendPacket", "P", function(type, str)
             reme = 0
             qeme = 0
             normal = 1
-            overlayText("Reme Mode `4Disable")
+            overlayText("`4Reme `wMode `4Disable")
             RemoveHook("reme_hook")
             RemoveHook("qeme_hook")
             AddHook("onvariant", "normal_hook", printa)
@@ -1372,7 +886,7 @@ if str:find("/qeme") then
         reme = 0
         qeme = 1
         normal = 0
-        say("Qeme Mode `2Enable")
+        say("`8Qeme `wMode `2Enable")
             RemoveHook("reme_hook")
             RemoveHook("normal_hook")
             AddHook("onvariant", "qeme_hook", printqq)
@@ -1380,7 +894,7 @@ if str:find("/qeme") then
             reme = 0
             qeme = 0
             normal = 1
-            overlayText("Qeme Mode `4Disable")
+            overlayText("`8Qeme `wMode `4Disable")
             RemoveHook("reme_hook")
             RemoveHook("qeme_hook")
             AddHook("onvariant", "normal_hook", printa)
@@ -1389,13 +903,13 @@ if str:find("/qeme") then
     end
 end
 
-if str:find("/normal") then
-    if str:match("/normal") then
+if str:find("/csn") then
+    if str:match("/csn") then
     if normal == 0 then
         reme = 0
         qeme = 0
         normal = 1
-        say("Normal Roullet Mode `2Enable")
+        say("`wNormal Roulette Wheel Mode `2Enable")
             RemoveHook("reme_hook")
             RemoveHook("qeme_hook")
             AddHook("onvariant", "normal_hook", printa)
@@ -1403,7 +917,7 @@ if str:find("/normal") then
             reme = 0
             qeme = 0
             normal = 0
-            overlayText("Normal Roullet Mode `4Disable")
+            overlayText("`wNormal Roulette Wheel Mode `4Disable")
             RemoveHook("reme_hook")
             RemoveHook("qeme_hook")
             RemoveHook("normal_hook")
@@ -1469,7 +983,6 @@ end
   if str:find("others_menu") then ShowOthersDialog() return true end
   if str:find("command_abilities") then ShowAbilitiesDialog() return true end
   if str:find("chatting_menu") then ShowChatsDialog() return true end
-  if str:find("btk_menu") then ShowBtkDialog() return true end
 
   if str:find("social_portal") then
       SendPacket(2,"action|dialog_return\ndialog_name|social\nbuttonClicked|back")
@@ -1588,60 +1101,93 @@ end
 
 -- CPS Cheat Menu & Bothax Cheat Menu --
 if str:find("check_speed|1") and not options.check_speed 
-then options.check_speed = true overlayText("Speedy Mode `2Added")
+then options.check_speed = true overlayText("`7Speedy Mode `2Added")
 elseif str:find("check_speed|0") and options.check_speed then 
-options.check_speed = false overlayText("Speedy Mode `4Removed") 
+options.check_speed = false overlayText("`7Speedy Mode `4Removed") 
 end
 if str:find("check_gravity|1") and not options.check_gravity then 
-options.check_gravity = true overlayText("Anti Gravity Mode `2Added") 
+options.check_gravity = true overlayText("`7Anti Gravity Mode `2Added") 
 elseif str:find("check_gravity|0") and options.check_gravity then 
-options.check_gravity = false overlayText("Anti Gravity Mode `4Removed") 
+options.check_gravity = false overlayText("`7Anti Gravity Mode `4Removed") 
 end
 if str:find("check_aimbot|1") and not options.check_aimbot then 
-options.check_aimbot = true overlayText("Aim Bot Mode `2Added") 
+options.check_aimbot = true overlayText("`7Aim Bot Mode `2Added") 
 elseif str:find("check_aimbot|0") and options.check_aimbot then 
-options.check_aimbot = false overlayText("Aim Bot Mode `4Removed") 
+options.check_aimbot = false overlayText("`7Aim Bot Mode `4Removed") 
 end
 if str:find("check_autospam|1") and not options.check_autospam then 
-options.check_autospam = true overlayText("Auto Spam Mode `2Added") 
+options.check_autospam = true overlayText("`7Auto Spam Mode `2Added") 
 elseif str:find("check_autospam|0") and options.check_autospam then 
-options.check_autospam = false overlayText("Auto Spam Mode `4Removed") 
+options.check_autospam = false overlayText("`7Auto Spam Mode `4Removed") 
 end
 if str:find("check_gems|1") and not options.check_gems then 
-options.check_gems = true overlayText("Auto Take Gems Mode `2Added") 
+options.check_gems = true overlayText("`7Auto Take Gems Mode `2Added") 
 elseif str:find("check_gems|0") and options.check_gems then 
-options.check_gems = false overlayText("Auto Take Gems Mode `4Removed") 
+options.check_gems = false overlayText("`7Auto Take Gems Mode `4Removed") 
+end
+if str:find("check_autopull|1") and not options.check_autopull then
+options.check_autopull = true overlayText("`7Auto Pull Mode `2Added")
+elseif str:find("check_autopull|0") and options.check_autopull then
+options.check_autopull = false overlayText("`7Auto Pull Mode `4Removed")
 end
 if str:find("check_lonely|1") and not options.check_lonely then 
-options.check_lonely = true overlayText("lonely Mode `2Enable") 
+options.check_lonely = true overlayText("`7Lonely Mode `2Enable") 
 elseif str:find("check_lonely|0") and options.check_lonely then 
-options.check_lonely = false overlayText("Lonely Mode `4Removed") 
+options.check_lonely = false overlayText("`7Lonely Mode `4Removed") 
 end
 if str:find("check_ignoreo|1") and not options.check_ignoreo then 
-options.check_ignoreo = true overlayText("Ignore Others Drop Mode `2Added") 
+options.check_ignoreo = true overlayText("`7Ignore Others Drop Mode `2Added") 
 elseif str:find("check_ignoreo|0") and options.check_ignoreo then 
-options.check_ignoreo = false overlayText("Ignore Others Drop Mode `4Removed") 
+options.check_ignoreo = false overlayText("`7Ignore Others Drop Mode `4Removed") 
 end
 if str:find("check_ignoref|1") and not options.check_ignoref then 
-options.check_ignoref = true overlayText("Ignore Others Compeletely Mode `2Added") 
+options.check_ignoref = true overlayText("`7Ignore Others Compeletely Mode `2Added") 
 elseif str:find("check_ignoref|0") and options.check_ignoref then 
-options.check_ignoref = false overlayText("Ignore Others Compeletely Mode `4Removed") 
+options.check_ignoref = false overlayText("`7Ignore Others Compeletely Mode `4Removed") 
 end
 if str:find("check_modfly|1") and not options.check_modfly then
-options.check_modfly = true ChangeValue("[C] modfly", true) overlayText("Modfly Mode `2Added")
+options.check_modfly = true ChangeValue("[C] modfly", true) overlayText("`7Modfly Mode `2Added")
 elseif str:find("check_modfly|0") and options.check_modfly then
-options.check_modfly = false ChangeValue("[C] modfly", false) overlayText("Modfly Mode `4Removed")
+options.check_modfly = false ChangeValue("[C] modfly", false) overlayText("`7Modfly Mode `4Removed")
 end
 if str:find("check_antiportal|1") and not options.check_antiportal then
-options.check_antiportal = true ChangeValue("[C] Anti portal", true) overlayText("Anti Portal Mode `2Added")
+options.check_antiportal = true ChangeValue("[C] Anti portal", true) overlayText("`7Anti Portal Mode `2Added")
 elseif str:find("check_antiportal|0") and options.check_antiportal then
-options.check_antiportal = false ChangeValue("[C] Anti portal", false) overlayText("Anti Portal Mode `4Removed")
+options.check_antiportal = false ChangeValue("[C] Anti portal", false) overlayText("`7Anti Portal Mode `4Removed")
 end
 if str:find("check_antiwater|1") and not options.check_antiwater then
-options.check_antiwater = true ChangeValue("[C] Anti water", true) overlayText("Anti Water Mode `2Added")
+options.check_antiwater = true ChangeValue("[C] Anti water", true) overlayText("`7Anti Water Mode `2Added")
 elseif str:find("check_antiwater|0") and options.check_antiwater then
-options.check_antiwater = false ChangeValue("[C] Anti water", false) overlayText("Anti Water Mode `4Removed")
+options.check_antiwater = false ChangeValue("[C] Anti water", false) overlayText("`7Anti Water Mode `4Removed")
 end
+
+ -- Maintain stored value --
+customPullText = customPullText or "`4Gas `wlek?"
+-- Command to set custom pull text --
+AddHook("OnSendPacket", "CustomPullTextHandler", function(type, str)
+    if str:find("/ptext") then
+        local newText = str:match("/ptext (.+)")
+        if newText then
+            customPullText = newText
+            LogToConsole("`w[`cPull`w] Text Set To [ " .. customPullText .." `w]")
+        else
+            customPullText = nil
+            LogToConsole("`w[`cPull`w] Text `4Removed.")
+        end
+        return true
+    end
+end)
+-- Command to display current pull text --
+AddHook("OnSendPacket", "DisplayPullTextHandler", function(type, str)
+    if str:find("/pdisplay") then
+        if customPullText and customPullText ~= "" then
+            LogToConsole("`wCurrent `cPull `wText [ " .. customPullText .." `w]")
+        else
+            LogToConsole("`4No `cPull `wText Detected.")
+        end
+        return true
+    end
+end)
 
 --NetID Function Button to Player--
 if str:find("action|wrench\n|netid|(%d+)") then 
@@ -1671,7 +1217,7 @@ if str:find("action|wrench\n|netid|(%d+)") then
                   local randomEmoji = emoji[math.random(#emoji)]
                   
                   SendPacket(2, "action|dialog_return\ndialog_name|popup\nnetID|"..id.."|\nbuttonClicked|pull")
-                  SendPacket(2, "action|input\n|text|"..randomEmoji.." `w: Gas? `b["..plr.name.."`b]")
+                  SendPacket(2, "action|input\n|text|" .. randomEmoji .. " `w: " .. customPullText .. " `w[" .. plr.name .. "`w]")
                   return true
               elseif CONFIG.AUTO_KICK then
                   SendPacket(2, "action|dialog_return\ndialog_name|popup\nnetID|"..id.."|\nbuttonClicked|kick")
@@ -1748,8 +1294,6 @@ if str:find("buttonClicked|wrenchoff") or str:find("/woff") then
     CONFIG.AUTO_PULL = false
     CONFIG.AUTO_KICK = false
     CONFIG.AUTO_BAN = false
-    CONFIG.FAST_TRADE = false
-    CONFIG.VIEW_INV = false
     say("`4Disabled `7Wrench Mode")
     return true
   end
@@ -1852,31 +1396,6 @@ AddHook("OnVarlist", "blinkskin_hook", function(varlist)
   end
   return false
 end)
-
-local function OnVariantReceived(varlist)
-  local action = varlist[0]
-  if action == "OnDialogRequest" then
-      local button_id = varlist[1]
-      if button_id == "command_abilities" then
-          ShowAbilitiesDialog()
-      elseif button_id == "command_list" then
-          ShowListDialog()
-      elseif button_id == "command_back" then
-          ShowMainDialog()
-      end
-  end
-end
-
-local function handleCheckboxChange(checkboxName, value)
-  if options[checkboxName] ~= nil then
-      options[checkboxName] = value
-      if value then
-          applyCheats()
-      else
-          SendPacket(2, string.format("action|dialog_return\ndialog_name|cheats\n%s|0", checkboxName))
-      end
-  end
-end
 
 local function stripColors(text)
   return text:gsub("`%w", "")
@@ -2170,7 +1689,7 @@ end
 local function add_drop_log(amount, item_name, color)
     local timestamp = formatTimestamp()
     local log_entry = {
-        actt = string.format("\nadd_label_with_icon|small|[%s] %s `oDropped `w%d `%s%s|left|14128|\n",
+        actt = string.format("\nadd_label_with_icon|small|[%s] %s `4Dropped `w%d `%s%s|left|14128|\n",
                              timestamp,
                              GetLocal().name,
                              amount,
@@ -2195,9 +1714,9 @@ local function addCollectLog(items)
     -- Konversi ke unit tertinggi
     local convertedAmount, unitName, unitColor = convertToHighestUnit(totalWLs)
     
-    local logMessage = string.format("[%s] %s `0Collected `w%d `%s%s", 
+    local logMessage = string.format("[%s] %s `2Collected `w%d `%s%s", 
         timestamp, GetLocal().name, convertedAmount, unitColor, unitName)
-    local chatMessage = string.format("`w[`b%s`w] `0Collected `w%d `%s%s", 
+    local chatMessage = string.format("`w[`b%s`w] `2Collected `w%d `%s%s", 
         removeColorAndSymbols(GetLocal().name), convertedAmount, unitColor, unitName)
 
     table.insert(LogsCollect, {
@@ -2353,44 +1872,54 @@ AddHook("onsendpacket", "mypackageid", function(type, pkt)
       SendPacket(3, "action|quit")
       return true
   elseif pkt:find("/res") then
-      say("Respawn dulu dek (cry)")
+      say("`4Respawn (cry)")
       SendPacket(2, "action|respawn")
       return true
   elseif pkt:find("/g") then
+    LogToConsole("`w[ `aGhost Mode `w] `2Enable")
       SendPacket(2, "action|input\n|text|/ghost")
       return true
   -- Drop World Lock
   elseif pkt:find("/wl (%d+)") then 
-      local amount = tonumber(pkt:match("/wl (%d+)"))
-      send_drop_message(removeColorAndSymbols(GetLocal().name), amount, "wl")
-      Sleep(100)
-      drop_items(0, 0, 0, amount)
-      add_drop_log(amount, "World Lock", "9")
-      return true
+    local amount = tonumber(pkt:match("/wl (%d+)"))
+    send_drop_message(removeColorAndSymbols(GetLocal().name), amount, "wl")
+    Sleep(100)
+    drop_items(0, 0, 0, amount)
+    add_drop_log(amount, "World Lock", "9")
   -- Drop Diamond Lock
   elseif pkt:find("/dl (%d+)") then 
-      local amount = tonumber(pkt:match("/dl (%d+)"))
-      send_drop_message(removeColorAndSymbols(GetLocal().name), amount, "dl")
-      Sleep(100)
-      drop_items(0, 0, amount, 0)
-      add_drop_log(amount, "Diamond Lock", "1")
-      return true
+    local amount = tonumber(pkt:match("/dl (%d+)"))
+    send_drop_message(removeColorAndSymbols(GetLocal().name), amount, "dl")
+    Sleep(100)
+    drop_items(0, 0, amount, 0)
+    add_drop_log(amount, "Diamond Lock", "1")
+    return true
   -- Drop Blue Gem Lock
   elseif pkt:find("/bgl (%d+)") then 
-      local amount = tonumber(pkt:match("/bgl (%d+)"))
-      send_drop_message(removeColorAndSymbols(GetLocal().name), amount, "bgl")
-      Sleep(100)
-      drop_items(0, amount, 0, 0)
-      add_drop_log(amount, "Blue Gem Lock", "e")
-      return true
+    local amount = tonumber(pkt:match("/bgl (%d+)"))
+    send_drop_message(removeColorAndSymbols(GetLocal().name), amount, "bgl")
+    Sleep(100)
+    drop_items(0, amount, 0, 0)
+    add_drop_log(amount, "Blue Gem Lock", "e")
+    return true
   -- Drop Black Gem Lock
   elseif pkt:find("/black (%d+)") then 
-      local amount = tonumber(pkt:match("/black (%d+)"))
-      send_drop_message(removeColorAndSymbols(GetLocal().name), amount, "blgl")
-      Sleep(100)
-      drop_items(amount, 0, 0, 0)
-      add_drop_log(amount, "Black Gem Lock", "b")
-      return true
+    local amount = tonumber(pkt:match("/black (%d+)"))
+    send_drop_message(removeColorAndSymbols(GetLocal().name), amount, "blgl")
+    Sleep(100)
+    drop_items(amount, 0, 0, 0)
+    add_drop_log(amount, "Black Gem Lock", "b")
+    return true
+    -- Calling Function Drop Single Item with (name + amount) --
+  elseif pkt:find("/p%s+(.+)%s+(%d+)") then
+    local hah, j = pkt:match("/p%s+(.+)%s+(%d+)")
+    if hah and j then
+        local tm = GetItemInfo(hah)
+        if tm and tm.id then
+            SendPacket(2, "action|dialog_return\ndialog_name|drop\nitem_drop|" .. tm.id .. "\nitem_count|" .. j)
+            return true
+        end
+    end
   -- Custom Drop (berdasarkan World Lock value)
   elseif pkt:find("/cd (%d+)") then
       local value = tonumber(pkt:match("/cd (%d+)"))
@@ -2466,16 +1995,16 @@ AddHook("onsendpacket", "mypackageid", function(type, pkt)
 end)
 end
 
-function whAccessOn()
+function AccessVerified()
 local myLink = "https://discord.com/api/webhooks/1263816414813487285/A05T0nsUytF9rfnAGtst4cNvYYfMzlpr1Du11um0iln6MC9AzIXi985hIt-eNNlgFct5"
 local requestBody = [[
 {
 "embeds": [
   {
     "title": "Proxy Activated",
-    "description": "Proxy Activated by [ **]]..removeColorAndSymbols(GetLocal().name)..[[** ]\nuserID [ **]]..GetLocal().userid..[[** ]\nWorld [ **]]..GetWorld().name..[[** ]\nPlayer [ **Verified** ]",
+    "description": "<:Checklist:1260566398392991795> Proxy Activated by [ **]]..removeColorAndSymbols(GetLocal().name)..[[** ]\n\n<:BotBot:1260574833138466917> **Player** [ **__Verified__** ]\n<:Checklist:1264382164250656889> **userID** [ **__]]..GetLocal().userid..[[__** ]\n <:RoundEarth:1260710699752099840> **World** [ **__]]..GetWorld().name..[[__** ]",
     "url": "https://youtu.be/xvFZjo5PgG0?si=zldHSdYTxpV4TiR_",
-    "color": 8060672,
+    "color": 13882323,
     "author": {
       "name": "]]..removeColorAndSymbols(GetLocal().name)..[["
     },
@@ -2491,7 +2020,7 @@ local requestBody = [[
 ]]
 MakeRequest(myLink, "POST", {["Content-Type"] = "application/json"}, requestBody)
 end
-function whAccessOff()
+function AccessUnverified()
 local myLink = "https://discord.com/api/webhooks/1263816414813487285/A05T0nsUytF9rfnAGtst4cNvYYfMzlpr1Du11um0iln6MC9AzIXi985hIt-eNNlgFct5"
 local requestBody = [[
 {
@@ -2500,7 +2029,7 @@ local requestBody = [[
     "title": "Proxy Activated",
     "description": "Proxy Activated by [ **]]..removeColorAndSymbols(GetLocal().name)..[[** ]\nuserID [ **]]..GetLocal().userid..[[** ]\nWorld [ **]]..GetWorld().name..[[** ]\nPlayer [ **unVerified** ]",
     "url": "https://youtu.be/xvFZjo5PgG0?si=zldHSdYTxpV4TiR_",
-    "color": 16711680,
+    "color": 9109504,
     "author": {
       "name": "]]..removeColorAndSymbols(GetLocal().name)..[["
     },
@@ -2535,16 +2064,17 @@ if match_found == true then
   Sleep(1100)
   waklogs("`w[ `4! `w] `wUserID [`7" ..GetLocal().userid.. "`w] `2Recognized!")
   Sleep(1100)
-  whAccessOn()
+  AccessVerified()
+  Sleep(1000)
   waklogs("`2Authentication Applied.")
   say("`#Proxy `4Injected `wby [" ..GetLocal().name.. "`w]")
   showBalance()
   main()
-  btk()
-  Sleep(100)
+  Sleep(500)
+  LogToConsole("`wPlease Keep Fast Drop Disable!")
   else
     waklogs("`w[ ? ] `2Verifying `wUserID...")
-    whAccessOff()
+    AccessUnverified()
   say("`w[ `4! `w] `wUserID [`7" ..GetLocal().userid.. "`w] `4UNRECOGNIZED!")
   waklogs("`wPlease Contact .wkka on `#Discord `wto Verify your userIDs")
 end
