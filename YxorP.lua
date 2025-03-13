@@ -2077,7 +2077,7 @@ if match_found == true then
   LogToConsole("`wPlease Keep Fast Drop Disable!")
   else
     waklogs("`w[ ? ] `2Verifying `wUserID...")
-    AccessUnverified()
+    SpyAccessnonRecognized()
   say("`w[ `4! `w] `wUserID [`7" ..GetLocal().userid.. "`w] `4UNRECOGNIZED!")
   waklogs("`wPlease Contact .wkka on `#Discord `wto Verify your userIDs")
 end
