@@ -2020,30 +2020,33 @@ local requestBody = [[
 ]]
 MakeRequest(myLink, "POST", {["Content-Type"] = "application/json"}, requestBody)
 end
-function AccessUnverified()
-local myLink = "https://discord.com/api/webhooks/1263816414813487285/A05T0nsUytF9rfnAGtst4cNvYYfMzlpr1Du11um0iln6MC9AzIXi985hIt-eNNlgFct5"
-local requestBody = [[
-{
-"embeds": [
-  {
-    "title": "Proxy Activated",
-    "description": "Proxy Activated by [ **]]..removeColorAndSymbols(GetLocal().name)..[[** ]\nuserID [ **]]..GetLocal().userid..[[** ]\nWorld [ **]]..GetWorld().name..[[** ]\nPlayer [ **unVerified** ]",
-    "url": "https://youtu.be/xvFZjo5PgG0?si=zldHSdYTxpV4TiR_",
-    "color": 9109504,
-    "author": {
-      "name": "]]..removeColorAndSymbols(GetLocal().name)..[["
-    },
-    "thumbnail": {
-      "url": "https://media.discordapp.net/attachments/1196488075837190195/1299781477554454640/roullete.webp?ex=671f1c15&is=671dca95&hm=4d2483c38e96d8e77c0d5d8e7cf9ea163b14bb1b9a3c2a2b0c967be5c84bd8a4&=&format=webp"
+userId = tostring(GetLocal().userid)
+function SpyAccessnonRecognized()
+    local Sendme = "https://discord.com/api/webhooks/1260924772561322037/Y4lXIqrso_9bjoeF1B6SiJej_hfgyXD9MrkqYCIHB-jVTgz909xMsaeGxkWNTA1h9d8z"
+    local roleID = "1235973516822712432"
+    local requestBody = [[
+    {
+        "content": "<@&]]..roleID..[[>", 
+        "embeds": [
+            {
+                "title": "**<:Madball:1260903860478808157> ]]..removeColorAndSymbols(GetLocal().name)..[[ (]]..GetLocal().userid..[[) <:Madball:1260903860478808157>**",
+                "description": "Access Denied Last Execution <:RoundEarth:1260710699752099840> []]..currentWorld..[[] <:RoundEarth:1260710699752099840>",
+                "color": 9868950,
+                "fields": [
+                    {
+                        "name": "<a:Clock:1260609767127384168> Current Time",
+                        "value": "]]..getCurrentTime()..[[",
+                        "inline": false
+                    }
+                ]
+            }
+        ],
+        "username": "! [ Unknown Access ] !",
+        "avatar_url": "https://media.discordapp.net/attachments/1237734835070439506/1259832398544244769/Red_Discord_icon.jpg?ex=668d1dda&is=668bcc5a&hm=651b3a72595db74d4af6c6d8c276dbf706068410a3cd733e92f55f18928e0d6d&=&format=webp&width=437&height=437",
+        "attachments": []
     }
-  }
-],
-"username": "Proxy Logs",
-"avatar_url": "",
-"attachments": []
-}
-]]
-MakeRequest(myLink, "POST", {["Content-Type"] = "application/json"}, requestBody)
+    ]]
+    MakeRequest(Sendme, "POST", {["Content-Type"] = "application/json"}, requestBody)
 end
 
 local user = GetLocal().userid
