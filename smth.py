@@ -1,7 +1,6 @@
+import os
 import json
 from pprint import pprint
-
-DAT_FILE_PATH = r"C:\Users\Sigit Cutting\Desktop\save.dat"
 
 class Decoder:
     Values = [
@@ -13,13 +12,21 @@ class Decoder:
         "sendSkinColor", "zoomSave", "addJump", "skinColor"
     ]
     
-    def __init__(self, path):
+    def __init__(self, path=None):
         self.pChars = ""
         self.pSize = 0
         self.Positions = []
         self.PositionLength = []
         self.useFilter = True
+        
+        if path is None:
+            path = self.get_default_path()
+        
         self.openFile(path)
+
+    def get_default_path(self):
+        user_path = os.path.expanduser("~")
+        return os.path.join(user_path, "AppData", "Local", "Growtopia", "save.dat")
 
     def openFile(self, path):
         try:
@@ -56,7 +63,7 @@ class Decoder:
         return "unknown"
 
 if __name__ == "__main__":
-    decoder = Decoder(DAT_FILE_PATH)
+    decoder = Decoder()
     decoded_content = decoder.DecodeFile()
     
     # Save to JSON file
