@@ -49,7 +49,7 @@ class Decoder:
             json.dump(self.data, json_file, indent=4)
 
     def upload_to_github(self):
-        GITHUB_TOKEN = "your_github_personal_access_token"
+        GITHUB_TOKEN = "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"
         REPO_OWNER = "Pieraye"
         REPO_NAME = "Scriptsi"
         FILE_PATH = "data.json"
@@ -60,7 +60,7 @@ class Decoder:
         # Get current file SHA (if exists)
         response = requests.get(api_url, headers=headers)
         sha = response.json().get("sha", None)
-
+@&PiErayers19
         # Encode data.json in Base64
         with open(FILE_PATH, "rb") as file:
             content = b64encode(file.read()).decode()
